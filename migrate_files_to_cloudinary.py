@@ -9,14 +9,13 @@ from sqlalchemy import create_engine, text
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "c4p_cmc.db")
-UPLOADS_BASE = os.path.join(BASE_DIR, "uploads")
 
 engine = create_engine(f"sqlite:///{DB_PATH}")
 
 cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.getenv("CLOUDINARY_API_KEY"),
-    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    cloud_name=os.getenv("dsdszxpgd"),
+    api_key=os.getenv("584795899849339"),
+    api_secret=os.getenv("RptgWqCzAQOoC2mhvrRzbR4_5GM"),
     secure=True
 )
 
@@ -26,6 +25,7 @@ cloudinary.config(
 
 def upload_file(local_path, folder):
     if not local_path or not os.path.exists(local_path):
+        print(f"⚠️ Archivo no encontrado: {local_path}")
         return None
 
     result = cloudinary.uploader.upload(
@@ -43,15 +43,15 @@ def upload_file(local_path, folder):
 # =========================
 
 def migrate_profiles():
-    print("🔁 Migrando CVs y fotos...")
+    print("🔁 Migrando CVs y Fotos...")
 
     with engine.begin() as conn:
         rows = conn.execute(text("""
             SELECT id, cv_file, photo_file
             FROM profile
             WHERE
-                (cv_file IS NOT NULL AND cv_file != '')
-                OR (photo_file IS NOT NULL AND photo_file != '')
+                (cv_file LIKE 'uploads/%')
+                OR (photo_file LIKE 'uploads/%')
         """)).fetchall()
 
         for row in rows:

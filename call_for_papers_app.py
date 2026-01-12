@@ -1312,31 +1312,25 @@ def bootstrap_admins():
         hashed = generate_password_hash(pwd, method="pbkdf2:sha256")
 
         if u:
-            # Asegura rol y credenciales (sin borrar la BD)
             u.password_hash = hashed
             u.unique_password = pwd
             u.role = "admin"
-            if not u.full_name:
-                u.full_name = "Administrador"
-            db.session.commit()
-            print("✅ Admin asegurado:", email_l)
         else:
-            # Si no existe (por si faltara alguno), lo creamos
-            new_u = User(
+            u = User(
                 full_name="Administrador Comité Técnico",
                 email=email_l,
                 password_hash=hashed,
                 unique_password=pwd,
                 role="admin"
             )
-            db.session.add(new_u)
-            db.session.commit()
-            print("✅ Admin creado:", email_l)
+            db.session.add(u)
 
-    with app.app_context():
-        db.create_all()
-        ensure_sqlite_columns()
-        bootstrap_admins()
+    db.session.commit()
 
-        inspector = db.inspect(db.engine)
-        print("📦 Tablas existentes:", inspector.get_table_names())
+with app.app_context():
+    db.create_all()
+    ensure_sqlite_columns()
+    bootstrap_admins()
+
+    inspector = db.inspect(db.engine)
+    print("📦 Tablas existentes:", inspector.get_table_names())

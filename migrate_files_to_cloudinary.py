@@ -9,7 +9,6 @@ from sqlalchemy import create_engine, text
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "c4p_cmc.db")
-
 UPLOADS_BASE = os.path.join(BASE_DIR, "uploads")
 
 engine = create_engine(f"sqlite:///{DB_PATH}")
@@ -25,12 +24,12 @@ cloudinary.config(
 # HELPERS
 # =========================
 
-def upload_file(path, folder):
-    if not os.path.exists(path):
+def upload_file(local_path, folder):
+    if not local_path or not os.path.exists(local_path):
         return None
 
     result = cloudinary.uploader.upload(
-        path,
+        local_path,
         folder=folder,
         resource_type="auto",
         use_filename=True,
@@ -40,26 +39,47 @@ def upload_file(path, folder):
     return result.get("secure_url")
 
 # =========================
-# MIGRAR CVs
+# MIGRAR CVs Y FOTOS
 # =========================
 
-def migrate_cvs():
-    print("🔁 Migrando CVs...")
+def migrate_profiles():
+    print("🔁 Migrando CVs y fotos...")
+
     with engine.begin() as conn:
-        rows = conn.execute(
-            text("SELECT id, cv_url FROM profile WHERE cv_url LIKE '/uploads/%'")
-        ).fetchall()
+        rows = conn.execute(text("""
+            SELECT id, cv_file, photo_file
+            FROM profile
+            WHERE
+                (cv_file IS NOT NULL AND cv_file != '')
+                OR (photo_file IS NOT NULL AND photo_file != '')
+        """)).fetchall()
 
         for row in rows:
-            local_path = os.path.join(BASE_DIR, row.cv_url.lstrip("/"))
-            cloud_url = upload_file(local_path, "c4p/migration/cv")
+            profile_id = row.id
 
-            if cloud_url:
-                conn.execute(
-                    text("UPDATE profile SET cv_url = :url WHERE id = :id"),
-                    {"url": cloud_url, "id": row.id}
-                )
-                print(f"✅ CV migrado (profile {row.id})")
+            # ---- CV ----
+            if row.cv_file and row.cv_file.startswith("uploads/"):
+                cv_path = os.path.join(BASE_DIR, row.cv_file)
+                cv_url = upload_file(cv_path, "c4p/migration/cv")
+
+                if cv_url:
+                    conn.execute(
+                        text("UPDATE profile SET cv_file = :url WHERE id = :id"),
+                        {"url": cv_url, "id": profile_id}
+                    )
+                    print(f"✅ CV migrado (profile {profile_id})")
+
+            # ---- FOTO ----
+            if row.photo_file and row.photo_file.startswith("uploads/"):
+                photo_path = os.path.join(BASE_DIR, row.photo_file)
+                photo_url = upload_file(photo_path, "c4p/migration/photos")
+
+                if photo_url:
+                    conn.execute(
+                        text("UPDATE profile SET photo_file = :url WHERE id = :id"),
+                        {"url": photo_url, "id": profile_id}
+                    )
+                    print(f"✅ Foto migrada (profile {profile_id})")
 
 # =========================
 # MIGRAR PROPUESTAS
@@ -67,35 +87,36 @@ def migrate_cvs():
 
 def migrate_proposals():
     print("🔁 Migrando propuestas...")
+
     with engine.begin() as conn:
-        rows = conn.execute(
-            text("""
-                SELECT id, supporting_doc_url
-                FROM proposal
-                WHERE supporting_doc_url LIKE '/uploads/%'
-            """)
-        ).fetchall()
+        rows = conn.execute(text("""
+            SELECT id, supporting_doc_url
+            FROM proposals
+            WHERE supporting_doc_url LIKE 'uploads/%'
+        """)).fetchall()
 
         for row in rows:
-            local_path = os.path.join(BASE_DIR, row.supporting_doc_url.lstrip("/"))
-            cloud_url = upload_file(local_path, "c4p/migration/proposals")
+            proposal_id = row.id
+            doc_path = os.path.join(BASE_DIR, row.supporting_doc_url)
+
+            cloud_url = upload_file(doc_path, "c4p/migration/proposals")
 
             if cloud_url:
                 conn.execute(
                     text("""
-                        UPDATE proposal
+                        UPDATE proposals
                         SET supporting_doc_url = :url
                         WHERE id = :id
                     """),
-                    {"url": cloud_url, "id": row.id}
+                    {"url": cloud_url, "id": proposal_id}
                 )
-                print(f"✅ Propuesta migrada (id {row.id})")
+                print(f"✅ Propuesta migrada (id {proposal_id})")
 
 # =========================
 # RUN
 # =========================
 
 if __name__ == "__main__":
-    migrate_cvs()
+    migrate_profiles()
     migrate_proposals()
-    print("🎉 Migración finalizada")
+    print("🎉 Migración finalizada correctamente")

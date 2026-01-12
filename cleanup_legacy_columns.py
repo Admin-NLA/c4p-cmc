@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+from SQLAlchemy import create_engine, text
 
 engine = create_engine("sqlite:///c4p_cmc.db")
 

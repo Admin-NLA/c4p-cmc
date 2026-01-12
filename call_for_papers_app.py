@@ -203,7 +203,9 @@ class Proposal(db.Model):
 
     # Fecha de recepción (se crea via migración ligera si no existe en SQLite)
     received_at = db.Column(db.DateTime, default=datetime.datetime.now())
-
+#----------------------------------------------------------------------------------------------------------------------#
+with app.app_context():
+    db.create_all()
 # =========================
 # UTILIDADES
 # =========================

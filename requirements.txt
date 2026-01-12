@@ -1,7 +1,5 @@
 Flask
-flask_sqlalchemy
+Flask-SQLAlchemy
 Werkzeug
 cloudinary
-Flask-WTF
-Flask-Limiter
-gunicorn
+flask-limiter

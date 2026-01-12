@@ -5,6 +5,7 @@ import datetime
 
 from urllib.parse import urlparse  # (se mantiene aunque ya no se use para CV/FOTO/VIDEO en esta versión)
 from flask_wtf import CSRFProtect
+from flask_wtf import FlaskForm
 from flask import (
     Flask, request, redirect, url_for, flash,
     session, render_template_string
@@ -147,6 +148,9 @@ def allowed_file(filename: str, file_type: str) -> bool:
     ext = filename.rsplit(".", 1)[1].lower()
     return ext in ALLOWED_EXTENSIONS.get(file_type, set())
 #------------------------------------------------------------------------#
+
+class CSRFOnlyForm(FlaskForm):
+    pass
 
 # =========================
 # MODELOS
@@ -452,20 +456,20 @@ def index():
                         <div id="login-form-container" class="bg-white p-6 rounded-lg shadow-md">
                             <h3 class="text-2xl font-bold cmc-text-blue mb-4">Iniciar Sesión</h3>
                             <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="text" name="email" placeholder="Correo Electrónico" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <input type="password" name="password" placeholder="Contraseña Única" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
-                                <button type="submit" class="w-full cmc-blue text-white py-3 rounded-lg font-bold hover:opacity-90 transition shadow-md">Ingresar</button>
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                            
+                                <button type="submit" class="w-full cmc-blue text-white py-3 rounded-lg font-bold hover:opacity-90 transition shadow-md">Ingresar</button>                           
                             </form>
                         </div>
 
                         <div class="bg-white p-6 rounded-lg shadow-md">
                             <h3 class="text-2xl font-bold cmc-text-blue mb-4">Registro Rápido</h3>
-                            <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
+                             <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="text" name="full_name" placeholder="Nombre Completo" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <input type="text" name="email" placeholder="Correo Electrónico" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition shadow-md">Registrarme</button>
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             </form>
                             <p class="text-sm cmc-gray mt-4">
                                 Al registrarte se generará una contraseña única y se mostrará en pantalla. Guárdala de inmediato.
@@ -647,6 +651,7 @@ def profile():
 
     PROFILE_HTML = """
     <form method="POST" class="space-y-6" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="col-span-full">
                 <h3 class="text-xl font-semibold mb-3 cmc-text-blue border-b cmc-border pb-2">1. Datos Personales</h3>
@@ -759,16 +764,15 @@ def profile():
         <button type="submit" class="bg-[#2F4885] text-white py-3 px-6 rounded-lg font-bold hover:opacity-90 transition shadow-lg text-lg w-full md:w-auto">
             Guardar y Actualizar Perfil
         </button>
-        <input type="hidden" name="csrf_token" value="{{ form.hidden_tag() }}">
     </form>
     """
-
     rendered = render_template_string(
         PROFILE_HTML,
         user=user,
         profile=profile_data,
         country_options=country_options
     )
+
     return render_internal_page("Mi Perfil de Candidato", rendered)
 
 # =========================
@@ -913,7 +917,7 @@ def submit_proposal():
         </div>
 
         <form method="POST" class="space-y-6" enctype="multipart/form-data">
-
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label class="block text-sm font-medium cmc-text-blue">Archivo de Propuesta (obligatorio) *</label>
                 <input type="file" name="proposal_file" accept=".pdf,.doc,.docx" required
@@ -932,7 +936,6 @@ def submit_proposal():
                 class="bg-[#2F4885] text-white py-4 px-8 rounded-lg font-bold text-lg hover:opacity-90 transition shadow-lg mt-8 w-full">
                 Enviar Propuesta
             </button>
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         </form>
     </div>
     """
@@ -1115,6 +1118,7 @@ def admin_proposals():
             <td class="px-6 py-4">{doc_link}</td>
             <td class="px-6 py-4">
                 <form method="POST" class="flex items-center space-x-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="proposal_id" value="{p.id}">
                     <select name="new_status" class="p-2 rounded-lg border">
                         {options_html}
@@ -1122,7 +1126,6 @@ def admin_proposals():
                     <button type="submit" class="bg-[#2F4885] text-white px-3 py-2 rounded-lg font-semibold hover:opacity-90 transition">
                         Guardar
                     </button>
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 </form>
             </td>
             <td class="px-6 py-4">{p.status}</td>

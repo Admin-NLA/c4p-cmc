@@ -530,6 +530,10 @@ def profile():
         cv_file = request.files.get("cv_file")
         photo_file = request.files.get("photo_file")
 
+        print("DEBUG FILES:", request.files)
+        print("CV:", cv_file.filename if cv_file else None)
+        print("PHOTO:", photo_file.filename if photo_file else None)
+
         if cv_file and cv_file.filename:
             if not allowed_file(cv_file.filename, "cv"):
                 flash("CV inválido. Formatos permitidos: PDF, DOC, DOCX.", "error")

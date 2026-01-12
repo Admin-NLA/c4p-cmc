@@ -26,17 +26,16 @@ import cloudinary.api
 # =========================
 # CONFIGURACIÓN
 # =========================
+app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-
-app = Flask(__name__)
-app.config["SECRET_KEY"] = secrets.token_hex(16)
 
 DB_DIR = os.path.join(basedir, "data")
 os.makedirs(DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(DB_DIR, "c4p_cmc.db")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
 
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
+app.config["SECRET_KEY"] = secrets.token_hex(16)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Límite de carga (ajusta si quieres)
@@ -215,6 +214,7 @@ with app.app_context():
     db.create_all()
     ensure_sqlite_columns()
     bootstrap_admins()
+
     inspector = db.inspect(db.engine)
     print("📦 Tablas existentes:", inspector.get_table_names())
 #-------------------------------------------------------#
@@ -810,6 +810,7 @@ def submit_proposal():
             return redirect(url_for("submit_proposal"))
 
         # Guardar archivo como doc --------------- Cambio
+        doc_url = upload_to_cloudinary(proposal_file, "c4p/proposals/docs")
         if not doc_url:
             flash("Error al subir el archivo. Intenta nuevamente.", "error")
             return redirect(url_for("submit_proposal"))
@@ -846,7 +847,6 @@ def submit_proposal():
         if not validate_file_size(proposal_file, "proposal"):
             flash("La propuesta no debe exceder 10 MB.", "error")
             return redirect(url_for("submit_proposal"))
-        doc_url = upload_to_cloudinary(proposal_file, "c4p/proposals/docs")
 
         db.session.commit()
         flash(f'¡Propuesta "{title_auto}" enviada a {len(venues)} sede(s) con éxito!', "success")

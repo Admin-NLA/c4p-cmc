@@ -4,3 +4,4 @@ Werkzeug
 cloudinary
 Flask-WTF
 Flask-Limiter
+gunicorn

@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+c4p_cmc.db
+uploads/
+.env

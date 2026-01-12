@@ -28,6 +28,13 @@ import cloudinary.api
 # CONFIGURACIÓN
 # =========================
 app = Flask(__name__)
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_proto=1,
+    x_host=1
+)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -36,7 +43,7 @@ os.makedirs(DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(DB_DIR, "c4p_cmc.db")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
-app.config["SECRET_KEY"] = secrets.token_hex(16)
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Límite de carga (ajusta si quieres)
@@ -46,7 +53,7 @@ db = SQLAlchemy(app)
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Lax"
+    SESSION_COOKIE_SAMESITE="None"
 )
 
 limiter = Limiter(

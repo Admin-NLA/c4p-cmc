@@ -32,7 +32,11 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secrets.token_hex(16)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(basedir, "c4p_cmc.db")
+DB_DIR = os.path.join(basedir, "data")
+os.makedirs(DB_DIR, exist_ok=True)
+DB_PATH = os.path.join(DB_DIR, "c4p_cmc.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Límite de carga (ajusta si quieres)
@@ -59,9 +63,9 @@ csrf = CSRFProtect(app)
 # =========================
 
 cloudinary.config(
-    cloud_name=os.getenv("dsdszxpgd"),
-    api_key=os.getenv("584795899849339"),
-    api_secret=os.getenv("RptgWqCzAQOoC2mhvrRzbR4_5GM"),
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
     secure=True
 )
 #-----------------------------#
@@ -204,8 +208,16 @@ class Proposal(db.Model):
     # Fecha de recepción (se crea via migración ligera si no existe en SQLite)
     received_at = db.Column(db.DateTime, default=datetime.datetime.now())
 #----------------------------------------------------------------------------------------------------------------------#
+# =========================
+# DB INIT (CRÍTICO PARA RENDER)
+# =========================
 with app.app_context():
     db.create_all()
+    ensure_sqlite_columns()
+    bootstrap_admins()
+    inspector = db.inspect(db.engine)
+    print("📦 Tablas existentes:", inspector.get_table_names())
+#-------------------------------------------------------#
 # =========================
 # UTILIDADES
 # =========================
@@ -1328,16 +1340,3 @@ def bootstrap_admins():
             db.session.add(new_u)
             db.session.commit()
             print("✅ Admin creado:", email_l)
-
-# =========================
-# MAIN
-# =========================
-
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        ensure_sqlite_columns()
-        bootstrap_admins()
-
-    print("Aplicación lista. Abra su navegador en: http://127.0.0.1:5000/")
-    app.run(debug=True)

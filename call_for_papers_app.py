@@ -136,9 +136,7 @@ def allowed_file(filename: str, file_type: str) -> bool:
     ext = filename.rsplit(".", 1)[1].lower()
     return ext in ALLOWED_EXTENSIONS.get(file_type, set())
 #------------------------------------------------------------------------#
-def ensure_sqlite_columns():
-    with db.engine.connect() as conn:
-        conn.execute(text("PRAGMA foreign_keys=ON"))
+
 # =========================
 # MODELOS
 # =========================
@@ -210,16 +208,7 @@ class Proposal(db.Model):
     # Fecha de recepción (se crea via migración ligera si no existe en SQLite)
     received_at = db.Column(db.DateTime, default=datetime.datetime.now())
 #----------------------------------------------------------------------------------------------------------------------#
-# =========================
-# DB INIT (CRÍTICO PARA RENDER)
-# =========================
-with app.app_context():
-    db.create_all()
-    ensure_sqlite_columns()
-    bootstrap_admins()
 
-    inspector = db.inspect(db.engine)
-    print("📦 Tablas existentes:", inspector.get_table_names())
 #-------------------------------------------------------#
 # =========================
 # UTILIDADES
@@ -1343,3 +1332,11 @@ def bootstrap_admins():
             db.session.add(new_u)
             db.session.commit()
             print("✅ Admin creado:", email_l)
+
+    with app.app_context():
+        db.create_all()
+        ensure_sqlite_columns()
+        bootstrap_admins()
+
+        inspector = db.inspect(db.engine)
+        print("📦 Tablas existentes:", inspector.get_table_names())

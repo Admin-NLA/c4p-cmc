@@ -561,11 +561,11 @@ def logout():
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
     form = DummyForm()
+    user = get_current_user()  # Mover esta asignación afuera, para que siempre exista
     if form.validate_on_submit():
-        user = get_current_user()
-    if not user:
-        flash("Debe iniciar sesión para acceder a su perfil.", "error")
-        return redirect(url_for("index"))
+        if not user:
+            flash("Debe iniciar sesión para acceder a su perfil.", "error")
+            return redirect(url_for("index"))
 
     # admins no usan perfil candidato
     if is_admin_user(user):

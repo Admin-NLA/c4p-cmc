@@ -1,3 +1,6 @@
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 import os
 import secrets
 import string
@@ -20,8 +23,15 @@ from werkzeug.utils import secure_filename
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = secrets.token_hex(16)
+# app
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
+app.config["SECRET_KEY"] = secrets.token_hex(16)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(basedir, "c4p_cmc.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -88,6 +98,19 @@ def save_uploaded_file(file_storage, file_type: str) -> str:
     dest = os.path.join(UPLOAD_FOLDERS[file_type], unique_name)
     file_storage.save(dest)
     return unique_name
+
+#DOCUMENTOS
+def upload_to_cloudinary(file, folder):
+    if not file:
+        return None
+
+    result = cloudinary.uploader.upload(
+        file,
+        folder=folder,
+        resource_type="auto"
+    )
+
+    return result.get("secure_url")
 
 @app.route("/uploads/<file_type>/<filename>")
 def uploaded_file(file_type, filename):
@@ -538,15 +561,15 @@ def profile():
             if not allowed_file(cv_file.filename, "cv"):
                 flash("CV inválido. Formatos permitidos: PDF, DOC, DOCX.", "error")
                 return redirect(url_for("profile"))
-            stored = save_uploaded_file(cv_file, "cv")
-            profile_data.cv_url = url_for("uploaded_file", file_type="cv", filename=stored)
+            cv_url = upload_to_cloudinary(cv_file, "c4p/cv")
+            profile_data.cv_url = cv_url
 
         if photo_file and photo_file.filename:
             if not allowed_file(photo_file.filename, "photo"):
                 flash("Foto inválida. Formatos permitidos: JPG, JPEG, PNG.", "error")
                 return redirect(url_for("profile"))
-            stored = save_uploaded_file(photo_file, "photo")
-            profile_data.photo_url = url_for("uploaded_file", file_type="photo", filename=stored)
+            photo_url = upload_to_cloudinary(photo_file, "c4p/photos")
+            profile_data.photo_url = photo_url
 
         profile_data.certifications = request.form.get("certifications", "").strip()
 

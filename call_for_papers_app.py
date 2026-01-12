@@ -1,20 +1,27 @@
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
 import os
 import secrets
 import string
 import datetime
 from urllib.parse import urlparse  # (se mantiene aunque ya no se use para CV/FOTO/VIDEO en esta versión)
+from flask_wtf import CSRFProtect
 
 from flask import (
     Flask, request, redirect, url_for, flash,
-    session, render_template_string, send_from_directory
+    session, render_template_string
 )
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import case, text
+from sqlalchemy import case
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
+
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+#------ New Info -------------#
+# >>> CLOUDINARY
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+#------------------------------#
 
 # =========================
 # CONFIGURACIÓN
@@ -23,22 +30,41 @@ from werkzeug.utils import secure_filename
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-# app
+app.config["SECRET_KEY"] = secrets.token_hex(16)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(basedir, "c4p_cmc.db")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Límite de carga (ajusta si quieres)
+app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB
+db = SQLAlchemy(app)
+
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax"
+)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+csrf = CSRFProtect(app)
+
+#------ New Info -------------#
+# =========================
+# >>> CLOUDINARY CONFIG
+# =========================
+
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
     api_secret=os.getenv("CLOUDINARY_API_SECRET"),
     secure=True
 )
-
-app.config["SECRET_KEY"] = secrets.token_hex(16)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(basedir, "c4p_cmc.db")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# Límite de carga (ajusta si quieres)
-app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB
-
-db = SQLAlchemy(app)
+#-----------------------------#
 
 # =========================
 # ROLES / ADMINS (COMITÉ TÉCNICO)
@@ -60,27 +86,44 @@ ADMIN_EMAILS = {e.lower() for e in ADMIN_USERS.keys()}
 def is_admin_user(user) -> bool:
     return bool(user and user.email and user.email.lower() in ADMIN_EMAILS)
 
+#---------------------- New Info -----------------------#
 # =========================
-# UPLOADS
+# HELPERS
 # =========================
 
-UPLOAD_BASE = os.path.join(basedir, "uploads")
+def upload_to_cloudinary(file, folder):
+    if not file or file.filename == "":
+        return None
 
-UPLOAD_FOLDERS = {
-    "cv": os.path.join(UPLOAD_BASE, "cv"),
-    "photo": os.path.join(UPLOAD_BASE, "photos"),
-    "doc": os.path.join(UPLOAD_BASE, "docs"),
-    "video": os.path.join(UPLOAD_BASE, "videos"),  # se conserva por compatibilidad (tabla antigua lo exige)
+    result = cloudinary.uploader.upload(
+        file,
+        folder=folder,
+        resource_type="auto",
+        use_filename=True,
+        unique_filename=True,
+        overwrite=False
+    )
+    return result.get("secure_url")
+
+MAX_FILE_SIZES = {
+    "cv": 5 * 1024 * 1024,       # 5 MB
+    "photo": 3 * 1024 * 1024,    # 3 MB
+    "proposal": 10 * 1024 * 1024 # 10 MB
 }
 
-for folder in UPLOAD_FOLDERS.values():
-    os.makedirs(folder, exist_ok=True)
+def validate_file_size(file, file_type):
+    max_size = MAX_FILE_SIZES.get(file_type)
+    if not max_size:
+        return True
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+    return size <= max_size
 
 ALLOWED_EXTENSIONS = {
     "cv": {"pdf", "doc", "docx"},
     "photo": {"jpg", "jpeg", "png"},
-    "doc": {"pdf", "ppt", "pptx", "doc", "docx"},
-    "video": {"mp4", "mov", "avi", "m4v"},
+    "proposal": {"pdf", "doc", "docx"},
 }
 
 def allowed_file(filename: str, file_type: str) -> bool:
@@ -88,35 +131,7 @@ def allowed_file(filename: str, file_type: str) -> bool:
         return False
     ext = filename.rsplit(".", 1)[1].lower()
     return ext in ALLOWED_EXTENSIONS.get(file_type, set())
-
-def save_uploaded_file(file_storage, file_type: str) -> str:
-    """
-    Guarda archivo en su carpeta correspondiente y devuelve el nombre almacenado (filename único).
-    """
-    original = secure_filename(file_storage.filename)
-    unique_name = f"{secrets.token_hex(8)}_{original}"
-    dest = os.path.join(UPLOAD_FOLDERS[file_type], unique_name)
-    file_storage.save(dest)
-    return unique_name
-
-#DOCUMENTOS
-def upload_to_cloudinary(file, folder):
-    if not file:
-        return None
-
-    result = cloudinary.uploader.upload(
-        file,
-        folder=folder,
-        resource_type="auto"
-    )
-
-    return result.get("secure_url")
-
-@app.route("/uploads/<file_type>/<filename>")
-def uploaded_file(file_type, filename):
-    if file_type not in UPLOAD_FOLDERS:
-        return "Archivo no válido", 404
-    return send_from_directory(UPLOAD_FOLDERS[file_type], filename)
+#------------------------------------------------------------------------#
 
 # =========================
 # MODELOS
@@ -423,6 +438,7 @@ def index():
                                 <input type="text" name="email" placeholder="Correo Electrónico" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <input type="password" name="password" placeholder="Contraseña Única" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <button type="submit" class="w-full cmc-blue text-white py-3 rounded-lg font-bold hover:opacity-90 transition shadow-md">Ingresar</button>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">                            
                             </form>
                         </div>
 
@@ -432,6 +448,7 @@ def index():
                                 <input type="text" name="full_name" placeholder="Nombre Completo" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <input type="text" name="email" placeholder="Correo Electrónico" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition shadow-md">Registrarme</button>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             </form>
                             <p class="text-sm cmc-gray mt-4">
                                 Al registrarte se generará una contraseña única y se mostrará en pantalla. Guárdala de inmediato.
@@ -490,6 +507,7 @@ def register():
 
 
 @app.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def login():
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "").strip()
@@ -553,22 +571,24 @@ def profile():
         cv_file = request.files.get("cv_file")
         photo_file = request.files.get("photo_file")
 
-        print("DEBUG FILES:", request.files)
-        print("CV:", cv_file.filename if cv_file else None)
-        print("PHOTO:", photo_file.filename if photo_file else None)
-
         if cv_file and cv_file.filename:
             if not allowed_file(cv_file.filename, "cv"):
                 flash("CV inválido. Formatos permitidos: PDF, DOC, DOCX.", "error")
                 return redirect(url_for("profile"))
-            cv_url = upload_to_cloudinary(cv_file, "c4p/cv")
+            cv_url = upload_to_cloudinary(cv_file, "c4p/profiles/cv")
+            if not cv_url:
+                flash("Error al subir el CV.", "error")
+                return redirect(url_for("profile"))
             profile_data.cv_url = cv_url
 
         if photo_file and photo_file.filename:
             if not allowed_file(photo_file.filename, "photo"):
                 flash("Foto inválida. Formatos permitidos: JPG, JPEG, PNG.", "error")
                 return redirect(url_for("profile"))
-            photo_url = upload_to_cloudinary(photo_file, "c4p/photos")
+            photo_url = upload_to_cloudinary(photo_file, "c4p/profiles/photos")
+            if not photo_url:
+                flash("Error al subir la foto.", "error")
+                return redirect(url_for("profile"))
             profile_data.photo_url = photo_url
 
         profile_data.certifications = request.form.get("certifications", "").strip()
@@ -587,6 +607,16 @@ def profile():
 
         if not profile_data.photo_url:
             flash("Por favor sube tu Foto profesional (obligatorio).", "error")
+            return redirect(url_for("profile"))
+        
+        #CV
+        if cv_file and not validate_file_size(cv_file, "cv"):
+            flash("El CV no debe exceder 5 MB.", "error")
+            return redirect(url_for("profile"))
+
+        #FOTO
+        if not validate_file_size(photo_file, "photo"):
+            flash("La foto no debe exceder 3 MB.", "error")
             return redirect(url_for("profile"))
 
         db.session.commit()
@@ -712,6 +742,7 @@ def profile():
         <button type="submit" class="bg-[#2F4885] text-white py-3 px-6 rounded-lg font-bold hover:opacity-90 transition shadow-lg text-lg w-full md:w-auto">
             Guardar y Actualizar Perfil
         </button>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     </form>
     """
 
@@ -728,6 +759,7 @@ def profile():
 # =========================
 
 @app.route("/submit", methods=["GET", "POST"])
+@limiter.limit("3 per minute")
 def submit_proposal():
     user = get_current_user()
     if not user:
@@ -755,12 +787,7 @@ def submit_proposal():
             return redirect(url_for("submit_proposal"))
 
         # Usamos allowed_file("doc") pero limitamos a pdf/doc/docx
-        if not allowed_file(proposal_file.filename, "doc"):
-            flash("Archivo inválido. Formatos permitidos: PDF, DOC, DOCX.", "error")
-            return redirect(url_for("submit_proposal"))
-
-        ext = proposal_file.filename.rsplit(".", 1)[1].lower()
-        if ext not in {"pdf", "doc", "docx"}:
+        if not allowed_file(proposal_file.filename, "proposal"):
             flash("Archivo inválido. Formatos permitidos: PDF, DOC, DOCX.", "error")
             return redirect(url_for("submit_proposal"))
 
@@ -768,12 +795,13 @@ def submit_proposal():
             flash("Debe seleccionar al menos una sede.", "error")
             return redirect(url_for("submit_proposal"))
 
-        # Guardar archivo como doc
-        stored_doc = save_uploaded_file(proposal_file, "doc")
-        doc_path = url_for("uploaded_file", file_type="doc", filename=stored_doc)
+        # Guardar archivo como doc --------------- Cambio
+        if not doc_url:
+            flash("Error al subir el archivo. Intenta nuevamente.", "error")
+            return redirect(url_for("submit_proposal"))
 
         # Título automático basado en el nombre del archivo
-        base_name = os.path.splitext(secure_filename(proposal_file.filename))[0]
+        base_name = os.path.splitext((proposal_file.filename))[0]
         title_auto = base_name.replace("_", " ").strip() or "Propuesta en documento"
 
         # Placeholders para cumplir con tu BD vieja (campos NOT NULL)
@@ -781,7 +809,7 @@ def submit_proposal():
         category_value = "Documento"
         placeholder_text = "Ver documento adjunto en 'Documento de apoyo'."
         # video_url era NOT NULL en tu esquema anterior -> guardamos doc_path como placeholder seguro.
-        video_url_value = doc_path
+        video_url_value = doc_url
 
         for venue in venues:
             new_proposal = Proposal(
@@ -792,13 +820,19 @@ def submit_proposal():
                 detailed_process=placeholder_text,
                 learning_outcome=placeholder_text,
                 category=category_value,
-                supporting_doc_url=doc_path,
+                supporting_doc_url=doc_url, #-----Ajuste----#
                 video_url=video_url_value,
                 venue=venue,
                 status="Enviada",
                 received_at=datetime.datetime.now()
             )
             db.session.add(new_proposal)
+
+        #PROPUESTA
+        if not validate_file_size(proposal_file, "proposal"):
+            flash("La propuesta no debe exceder 10 MB.", "error")
+            return redirect(url_for("submit_proposal"))
+        doc_url = upload_to_cloudinary(proposal_file, "c4p/proposals/docs")
 
         db.session.commit()
         flash(f'¡Propuesta "{title_auto}" enviada a {len(venues)} sede(s) con éxito!', "success")
@@ -881,6 +915,7 @@ def submit_proposal():
                 class="bg-[#2F4885] text-white py-4 px-8 rounded-lg font-bold text-lg hover:opacity-90 transition shadow-lg mt-8 w-full">
                 Enviar Propuesta
             </button>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         </form>
     </div>
     """
@@ -1070,6 +1105,7 @@ def admin_proposals():
                     <button type="submit" class="bg-[#2F4885] text-white px-3 py-2 rounded-lg font-semibold hover:opacity-90 transition">
                         Guardar
                     </button>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 </form>
             </td>
             <td class="px-6 py-4">{p.status}</td>
@@ -1292,24 +1328,14 @@ def bootstrap_admins():
             print("✅ Admin creado:", email_l)
 
 # =========================
-# MAIN / anterior despliegue
+# MAIN
 # =========================
 
-#if __name__ == "__main__":
- #   with app.app_context():
-  #      db.create_all()
-   #     ensure_sqlite_columns()
-    #    bootstrap_admins()
-      #print("Aplicación lista. Abra su navegador en: http://127.0.0.1:5000/")
-        # anterior despliegue app.run(debug=True)
-
-#Nueva Información para publicación
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         ensure_sqlite_columns()
         bootstrap_admins()
 
-    port = int(os.environ.get("PORT", 10000))
-    print(f"🚀 Aplicación iniciando en puerto {port}")
-    app.run(host="0.0.0.0", port=port)
+    print("Aplicación lista. Abra su navegador en: http://127.0.0.1:5000/")
+    app.run(debug=True)

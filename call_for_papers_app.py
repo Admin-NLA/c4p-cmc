@@ -28,12 +28,14 @@ import cloudinary.api
 # CONFIGURACIÓN
 # =========================
 app = Flask(__name__)
-from werkzeug.middleware.proxy_fix import ProxyFix
 
+from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
+    x_for=1,
     x_proto=1,
-    x_host=1
+    x_host=1,
+    x_port=1,
 )
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -51,9 +53,11 @@ app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB
 db = SQLAlchemy(app)
 
 app.config.update(
+    SECRET_KEY=os.environ.get("SECRET_KEY"),
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="None"
+    SESSION_COOKIE_SAMESITE="None",
+    WTF_CSRF_SSL_STRICT=False
 )
 
 limiter = Limiter(
@@ -755,7 +759,7 @@ def profile():
         <button type="submit" class="bg-[#2F4885] text-white py-3 px-6 rounded-lg font-bold hover:opacity-90 transition shadow-lg text-lg w-full md:w-auto">
             Guardar y Actualizar Perfil
         </button>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="csrf_token" value="{{ form.hidden_tag() }}">
     </form>
     """
 
@@ -1341,3 +1345,7 @@ with app.app_context():
 
     inspector = db.inspect(db.engine)
     print("📦 Tablas existentes:", inspector.get_table_names())
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)

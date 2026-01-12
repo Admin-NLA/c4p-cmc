@@ -9,6 +9,7 @@ from flask import (
     Flask, request, redirect, url_for, flash,
     session, render_template_string
 )
+from sqlalchemy import text
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import case
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -135,7 +136,9 @@ def allowed_file(filename: str, file_type: str) -> bool:
     ext = filename.rsplit(".", 1)[1].lower()
     return ext in ALLOWED_EXTENSIONS.get(file_type, set())
 #------------------------------------------------------------------------#
-
+def ensure_sqlite_columns():
+    with db.engine.connect() as conn:
+        conn.execute(text("PRAGMA foreign_keys=ON"))
 # =========================
 # MODELOS
 # =========================

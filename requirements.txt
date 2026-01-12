@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 Werkzeug
 cloudinary
 flask-limiter
+Flask-WTF

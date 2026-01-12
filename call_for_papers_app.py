@@ -1265,19 +1265,24 @@ def bootstrap_admins():
             print("✅ Admin creado:", email_l)
 
 # =========================
-# MAIN
+# MAIN / anterior despliegue
 # =========================
 
+#if __name__ == "__main__":
+ #   with app.app_context():
+  #      db.create_all()
+   #     ensure_sqlite_columns()
+    #    bootstrap_admins()
+      #print("Aplicación lista. Abra su navegador en: http://127.0.0.1:5000/")
+        # anterior despliegue app.run(debug=True)
+
+#Nueva Información para publicación
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         ensure_sqlite_columns()
         bootstrap_admins()
 
-    print("Aplicación lista. Abra su navegador en: http://127.0.0.1:5000/")
-    # anterior despliegue app.run(debug=True)
-
-#Nueva Información para publicación
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 10000))
+    print(f"🚀 Aplicación iniciando en puerto {port}")
     app.run(host="0.0.0.0", port=port)

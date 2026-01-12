@@ -2,9 +2,9 @@ import os
 import secrets
 import string
 import datetime
+
 from urllib.parse import urlparse  # (se mantiene aunque ya no se use para CV/FOTO/VIDEO en esta versión)
 from flask_wtf import CSRFProtect
-
 from flask import (
     Flask, request, redirect, url_for, flash,
     session, render_template_string

@@ -149,7 +149,7 @@ def allowed_file(filename: str, file_type: str) -> bool:
     return ext in ALLOWED_EXTENSIONS.get(file_type, set())
 #------------------------------------------------------------------------#
 
-class CSRFOnlyForm(FlaskForm):
+class DummyForm(FlaskForm):
     pass
 
 # =========================
@@ -560,7 +560,9 @@ def logout():
 
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
-    user = get_current_user()
+    form = DummyForm()
+    if form.validate_on_submit():
+        user = get_current_user()
     if not user:
         flash("Debe iniciar sesión para acceder a su perfil.", "error")
         return redirect(url_for("index"))

@@ -1209,7 +1209,7 @@ def admin_proposals():
                 # Primero conviertes a UTC explícitamente (si no lo está)
                 dt_utc = p.received_at.replace(tzinfo=None)  # si ya es naive en UTC, omite esto
                 # Formateas en el formato deseado (día-mes-año hora:minuto)
-                received = dt_utc.strftime("%d-%m-%Y %H:%M")
+                received = dt_utc.strftime("%d-%m-%Y")
         except Exception:
             received = "—"
 

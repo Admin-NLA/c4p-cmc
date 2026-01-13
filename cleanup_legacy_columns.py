@@ -1,6 +1,7 @@
+import os
 from SQLAlchemy import create_engine, text
 
-engine = create_engine("sqlite:///c4p_cmc.db")
+engine = create_engine(os.environ["DATABASE_URL"])
 
 with engine.begin() as conn:
     print("🧹 Limpiando valores legacy...")

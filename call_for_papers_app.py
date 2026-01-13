@@ -845,21 +845,33 @@ def submit_proposal():
         video_url_value = doc_url
 
         for venue in venues:
-            new_proposal = Proposal(
-                user_id=user.id,
-                title=title_auto,
-                session_type=session_type_value,
-                instructional_objective=placeholder_text,
-                detailed_process=placeholder_text,
-                learning_outcome=placeholder_text,
-                category=category_value,
-                supporting_doc_url=doc_url, #-----Ajuste----#
-                video_url=video_url_value,
-                venue=venue,
-                status="Enviada",
-                received_at=datetime.datetime.now()
-            )
-            db.session.add(new_proposal)
+            try:
+                if not doc_url:
+                    raise ValueError("Documento no subido correctamente")
+
+                new_proposal = Proposal(
+                    user_id=user.id,
+                    title=title_auto,
+                    session_type=session_type_value,
+                    instructional_objective=placeholder_text,
+                    detailed_process=placeholder_text,
+                    learning_outcome=placeholder_text,
+                    category=category_value,
+                    supporting_doc_url=doc_url,
+                    video_url=video_url_value,
+                    venue=venue,
+                    status="Enviada",
+                    received_at=datetime.datetime.now()
+                )
+
+                db.session.add(new_proposal)
+                db.session.commit()
+
+            except Exception as e:
+                db.session.rollback()
+                flash("No se pudo enviar la propuesta. Intente nuevamente.", "error")
+                print("❌ Error al guardar propuesta:", e)
+                return redirect(request.url)
 
         #PROPUESTA
         if not validate_file_size(proposal_file, "proposal"):

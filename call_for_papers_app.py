@@ -485,6 +485,7 @@ def index():
 
 
 @app.route("/register", methods=["POST"])
+@csrf.exempt
 def register():
     full_name = request.form.get("full_name", "").strip()
     email = request.form.get("email", "").strip().lower()
@@ -526,6 +527,7 @@ def register():
 
 
 @app.route("/login", methods=["POST"])
+@csrf.exempt
 @limiter.limit("5 per minute")
 def login():
     email = request.form.get("email", "").strip().lower()
@@ -780,6 +782,7 @@ def profile():
 # =========================
 
 @app.route("/submit", methods=["GET", "POST"])
+@csrf.exempt
 @limiter.limit("3 per minute")
 def submit_proposal():
     user = get_current_user()

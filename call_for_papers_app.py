@@ -45,7 +45,12 @@ DB_DIR = os.path.join(basedir, "data")
 os.makedirs(DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(DB_DIR, "c4p_cmc.db")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
+import os
+
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///c4p_cmc.db"
+)
 app.config['SECRET_KEY'] = '9f3d8c7c8b1a4e9fbb9a4c0c9cbd0f47e7d9c0f5'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 

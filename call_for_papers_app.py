@@ -57,6 +57,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Límite de carga (ajusta si quieres)
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB
 db = SQLAlchemy(app)
+with app.app_context():
+    db.create_all()
 
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY"),

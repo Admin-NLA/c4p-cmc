@@ -232,7 +232,7 @@ class Proposal(db.Model):
     received_at = db.Column(db.DateTime, default=datetime.datetime.now())
 #----------------------------------------------------------------------------------------------------------------------#
 
-#-------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------------#
 # =========================
 # UTILIDADES
 # =========================
@@ -281,6 +281,29 @@ def ensure_sqlite_columns():
             db.session.rollback()
         except Exception:
             pass
+
+# ==== Eliminar registro ============ #        
+def delete_from_cloudinary(file_url):
+    if not file_url:
+        return
+
+    try:
+        # Extraer public_id desde la URL
+        parts = file_url.split("/upload/")
+        if len(parts) < 2:
+            return
+
+        public_id_with_ext = parts[1]
+        public_id = os.path.splitext(public_id_with_ext)[0]
+
+        cloudinary.uploader.destroy(
+            public_id,
+            resource_type="raw"
+        )
+
+    except Exception as e:
+        print("❌ Error al eliminar en Cloudinary:", e)        
+#-----------UTILIDADES--------------------------------------------------------------------------------------------------#
 
 # =========================
 # UI / TEMPLATES
@@ -1205,6 +1228,19 @@ def admin_proposals():
                 </form>
             </td>
             <td class="px-6 py-4">{p.status}</td>
+            <td class="px-6 py-4">
+                <form method="POST"
+                    action="{url_for('delete_proposal', proposal_id=p.id)}"
+                    onsubmit="return confirm('¿Eliminar esta propuesta? Esta acción no se puede deshacer.')">
+
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <button type="submit"
+                            class="bg-red-600 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-700 transition">
+                        Eliminar
+                    </button>
+                </form>
+            </td>
         </tr>
         """
 
@@ -1227,6 +1263,7 @@ def admin_proposals():
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Archivo</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Cambiar estatus</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estatus actual</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -1390,6 +1427,39 @@ def admin_passwords():
     </div>
     """
     return render_internal_page("Admin | Contraseñas", HTML)
+
+# =========================
+# ADMIN - ELIMINAR PROPUESTAS
+# =========================
+@app.route("/admin/proposals/<int:proposal_id>/delete", methods=["POST"])
+def delete_proposal(proposal_id):
+    user = get_current_user()
+    if not user:
+        flash("Debe iniciar sesión.", "error")
+        return redirect(url_for("index"))
+
+    if not is_admin_user(user):
+        flash("Acceso no autorizado.", "error")
+        return redirect(url_for("admin_proposals"))
+
+    proposal = Proposal.query.get_or_404(proposal_id)
+
+    try:
+        # 1️⃣ Eliminar archivo en Cloudinary
+        delete_from_cloudinary(proposal.supporting_doc_url)
+
+        # 2️⃣ Eliminar registro en Neon
+        db.session.delete(proposal)
+        db.session.commit()
+
+        flash("Propuesta eliminada correctamente.", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash("Error al eliminar la propuesta.", "error")
+        print("❌ Error al eliminar propuesta:", e)
+
+    return redirect(url_for("admin_proposals"))
 
 # =========================
 # BOOTSTRAP ADMINS (ADMIN + COMITÉ TÉCNICO)

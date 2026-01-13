@@ -5,6 +5,7 @@ import datetime
 
 from urllib.parse import urlparse  # (se mantiene aunque ya no se use para CV/FOTO/VIDEO en esta versión)
 from flask_wtf import CSRFProtect
+from flask_wtf.csrf import generate_csrf
 from flask_wtf import FlaskForm
 from flask import (
     Flask, request, redirect, url_for, flash,
@@ -1135,9 +1136,9 @@ def proposals_list():
 # =========================
 
 @app.route("/admin/proposals", methods=["GET", "POST"])
-@csrf.exempt
 def admin_proposals():
     user = get_current_user()
+    csrf_token = generate_csrf()
     if not user:
         flash("Debe iniciar sesión.", "error")
         return redirect(url_for("index"))
@@ -1237,10 +1238,9 @@ def admin_proposals():
                 <form method="POST"
                     action="{url_for('delete_proposal', proposal_id=p.id)}"
                     onsubmit="return confirm('¿Eliminar esta propuesta? Esta acción no se puede deshacer.')">
-
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit"
-                            class="bg-red-600 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-700 transition">
+                  <input type="hidden" name="csrf_token" value="{csrf_token}">
+                  <button type="submit"
+                          class="bg-red-600 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-700 transition">
                         Eliminar
                     </button>
                 </form>

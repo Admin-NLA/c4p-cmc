@@ -1122,6 +1122,7 @@ def admin_proposals():
             <td class="px-6 py-4">{doc_link}</td>
             <td class="px-6 py-4">
                 <form method="POST" class="flex items-center space-x-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="proposal_id" value="{p.id}">
                     <select name="new_status" class="p-2 rounded-lg border">
                         {options_html}

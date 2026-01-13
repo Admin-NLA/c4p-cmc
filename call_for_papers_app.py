@@ -122,6 +122,7 @@ def upload_to_cloudinary(file, folder):
         file,
         folder=folder,
         resource_type="image",
+        type="upload",
         use_filename=True,
         unique_filename=True,
         overwrite=False

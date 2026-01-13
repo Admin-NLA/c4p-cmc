@@ -121,8 +121,8 @@ def upload_to_cloudinary(file, folder):
     result = cloudinary.uploader.upload(
         file,
         folder=folder,
+        upload_preset="c4p_public",  # 🔑 CLAVE
         resource_type="image",
-        type="upload",
         use_filename=True,
         unique_filename=True,
         overwrite=False

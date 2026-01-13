@@ -242,6 +242,11 @@ def generate_random_password(length=10):
     return "".join(secrets.choice(characters) for _ in range(length))
 
 def get_current_user():
+    try:
+        db.session.rollback()  # ← LIMPIA SESIÓN SI VIENE SUCIA
+    except Exception:
+        pass
+
     user_id = session.get("user_id")
     return db.session.get(User, user_id) if user_id else None
 

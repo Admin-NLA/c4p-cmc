@@ -1206,7 +1206,7 @@ def admin_proposals():
         received = "—"
         try:
             if p.received_at:
-                received = p.received_at.strftime("%Y-%m-%d %H:%M")
+                received = p.received_at.strftime("%Y-%m-%d")
         except Exception:
             received = "—"
 

@@ -837,6 +837,10 @@ def submit_proposal():
 
 #---------------------------------------------NUEVO BLOQUE-------------------------------------------------#
         # 1️⃣ Validar tamaño ANTES de todo
+        if not proposal_file or proposal_file.filename == "":
+            flash("Debe adjuntar un archivo de propuesta.", "error")
+            return redirect(url_for("submit_proposal"))
+
         if not validate_file_size(proposal_file, "proposal"):
             flash("La propuesta no debe exceder 10 MB.", "error")
             return redirect(url_for("submit_proposal"))

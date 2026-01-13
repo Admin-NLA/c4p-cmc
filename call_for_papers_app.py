@@ -230,7 +230,7 @@ class Proposal(db.Model):
     status = db.Column(db.String(50), default="Enviada")
 
     # Fecha de recepción (se crea via migración ligera si no existe en SQLite)
-    received_at = db.Column(db.DateTime, default=datetime.datetime.now())
+    received_at = db.Column(db.DateTime, default=datetime.datetime.utcnow())
 #----------------------------------------------------------------------------------------------------------------------#
 
 #----------------------------------------------------------------------------------------------------------------------------#
@@ -904,7 +904,7 @@ def submit_proposal():
                     video_url=video_url_value,
                     venue=venue,
                     status="Enviada",
-                    received_at=datetime.datetime.now()
+                    received_at=datetime.datetime.utcnow()
                 )
                 db.session.add(new_proposal)
 

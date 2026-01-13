@@ -46,7 +46,7 @@ os.makedirs(DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(DB_DIR, "c4p_cmc.db")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
+app.config['SECRET_KEY'] = '9f3d8c7c8b1a4e9fbb9a4c0c9cbd0f47e7d9c0f5'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Límite de carga (ajusta si quieres)
@@ -456,7 +456,6 @@ def index():
                         <div id="login-form-container" class="bg-white p-6 rounded-lg shadow-md">
                             <h3 class="text-2xl font-bold cmc-text-blue mb-4">Iniciar Sesión</h3>
                             <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="text" name="email" placeholder="Correo Electrónico" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <input type="password" name="password" placeholder="Contraseña Única" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <button type="submit" class="w-full cmc-blue text-white py-3 rounded-lg font-bold hover:opacity-90 transition shadow-md">Ingresar</button>                           
@@ -466,7 +465,6 @@ def index():
                         <div class="bg-white p-6 rounded-lg shadow-md">
                             <h3 class="text-2xl font-bold cmc-text-blue mb-4">Registro Rápido</h3>
                              <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="text" name="full_name" placeholder="Nombre Completo" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <input type="text" name="email" placeholder="Correo Electrónico" required class="w-full p-3 rounded-lg border-2 cmc-border focus:ring-2 focus:ring-blue-500">
                                 <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition shadow-md">Registrarme</button>
@@ -919,7 +917,6 @@ def submit_proposal():
         </div>
 
         <form method="POST" class="space-y-6" enctype="multipart/form-data">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label class="block text-sm font-medium cmc-text-blue">Archivo de Propuesta (obligatorio) *</label>
                 <input type="file" name="proposal_file" accept=".pdf,.doc,.docx" required
@@ -935,6 +932,7 @@ def submit_proposal():
             </div>
 
             <button type="submit"
+                {{ form.hidden_tag() }}
                 class="bg-[#2F4885] text-white py-4 px-8 rounded-lg font-bold text-lg hover:opacity-90 transition shadow-lg mt-8 w-full">
                 Enviar Propuesta
             </button>
@@ -1120,7 +1118,6 @@ def admin_proposals():
             <td class="px-6 py-4">{doc_link}</td>
             <td class="px-6 py-4">
                 <form method="POST" class="flex items-center space-x-2">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="proposal_id" value="{p.id}">
                     <select name="new_status" class="p-2 rounded-lg border">
                         {options_html}

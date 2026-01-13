@@ -390,7 +390,7 @@ def render_internal_page(title, content_html):
         </header>
 
         <main class="flex-grow py-8 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl">
+            <div class="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-2xl">
                 <h2 class="text-3xl font-bold cmc-text-blue mb-6">{{ title }}</h2>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -1104,7 +1104,7 @@ def proposals_list():
 
     HTML = f"""
     <div class="overflow-x-auto shadow-md rounded-lg">
-        <table class="min-w-[1200px] divide-y divide-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-[#2F4885] text-white">
                 <tr>
                     <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Título</th>
@@ -1206,8 +1206,10 @@ def admin_proposals():
         received = "—"
         try:
             if p.received_at:
-                # Enviar en formato ISO 8601 UTC completo con zona 'Z'
-                received = p.received_at.isoformat() + "Z"
+                # Primero conviertes a UTC explícitamente (si no lo está)
+                dt_utc = p.received_at.replace(tzinfo=None)  # si ya es naive en UTC, omite esto
+                # Formateas en el formato deseado (día-mes-año hora:minuto)
+                received = dt_utc.strftime("%d-%m-%Y %H:%M")
         except Exception:
             received = "—"
 

@@ -120,7 +120,17 @@ def upload_to_cloudinary(file, folder):
         unique_filename=True,
         overwrite=False
     )
-    return result.get("secure_url")
+    from cloudinary.utils import cloudinary_url
+
+    public_id = result["public_id"]
+
+    pdf_url, _ = cloudinary_url(
+        public_id,
+        resource_type="image",
+        format="pdf"
+    )
+
+    return pdf_url
 
 MAX_FILE_SIZES = {
     "cv": 5 * 1024 * 1024,       # 5 MB

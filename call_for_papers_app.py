@@ -114,7 +114,8 @@ def upload_to_cloudinary(file, folder):
     result = cloudinary.uploader.upload(
         file,
         folder=folder,
-        resource_type="auto",
+        resource_type="raw",
+        access_mode="public",
         use_filename=True,
         unique_filename=True,
         overwrite=False

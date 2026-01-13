@@ -1206,7 +1206,8 @@ def admin_proposals():
         received = "—"
         try:
             if p.received_at:
-                received = p.received_at.strftime("%Y-%m-%d")
+                # Enviar en formato ISO 8601 UTC completo con zona 'Z'
+                received = p.received_at.isoformat() + "Z"
         except Exception:
             received = "—"
 

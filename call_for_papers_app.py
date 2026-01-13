@@ -827,48 +827,107 @@ def submit_proposal():
             flash("Debe seleccionar al menos una sede.", "error")
             return redirect(url_for("submit_proposal"))
 
-        # Guardar archivo como doc --------------- Cambio
-        doc_url = upload_to_cloudinary(proposal_file, "c4p/proposals/docs")
-        if not doc_url:
-            flash("Error al subir el archivo. Intenta nuevamente.", "error")
-            return redirect(url_for("submit_proposal"))
+#---------------------------------------------------------------------------------------------------------#
+# <--- Guardar archivo como doc ---------------------------------- Eliminado ----------------------------->
+        #doc_url = upload_to_cloudinary(proposal_file, "c4p/proposals/docs")
+        #if not validate_file_size(proposal_file, "proposal"):
+            #flash("La propuesta no debe exceder 10 MB.", "error")
+            #return redirect(url_for("submit_proposal"))
+#---------------------------------------------------------------------------------------------------------#
 
-        # Título automático basado en el nombre del archivo
-        base_name = os.path.splitext((proposal_file.filename))[0]
-        title_auto = base_name.replace("_", " ").strip() or "Propuesta en documento"
-
-        # Placeholders para cumplir con tu BD vieja (campos NOT NULL)
-        session_type_value = "DOCUMENTO"
-        category_value = "Documento"
-        placeholder_text = "Ver documento adjunto en 'Documento de apoyo'."
-        # video_url era NOT NULL en tu esquema anterior -> guardamos doc_path como placeholder seguro.
-        video_url_value = doc_url
-
-        for venue in venues:
-            new_proposal = Proposal(
-                user_id=user.id,
-                title=title_auto,
-                session_type=session_type_value,
-                instructional_objective=placeholder_text,
-                detailed_process=placeholder_text,
-                learning_outcome=placeholder_text,
-                category=category_value,
-                supporting_doc_url=doc_url,
-                video_url=video_url_value,
-                venue=venue,
-                status="Enviada",
-                received_at=datetime.datetime.now()
-            )
-            db.session.add(new_proposal)
-            
-        #PROPUESTA
+#---------------------------------------------NUEVO BLOQUE-------------------------------------------------#
+        # 1️⃣ Validar tamaño ANTES de todo
         if not validate_file_size(proposal_file, "proposal"):
             flash("La propuesta no debe exceder 10 MB.", "error")
             return redirect(url_for("submit_proposal"))
+        
+        try:
+            # 2️⃣ Subir archivo a Cloudinary
+            doc_url = upload_to_cloudinary(proposal_file, "c4p/proposals/docs")
+            if not doc_url:
+                raise ValueError("Error al subir el archivo")
 
-        db.session.commit()
-        flash(f'¡Propuesta "{title_auto}" enviada a {len(venues)} sede(s) con éxito!', "success")
-        return redirect(url_for("proposals_list"))
+            # 3️⃣ Título automático basado en el nombre del archivo
+            base_name = os.path.splitext(proposal_file.filename)[0]
+            title_auto = base_name.replace("_", " ").strip() or "Propuesta en documento"
+
+            # 4️⃣ Placeholders (compatibilidad BD vieja)
+            session_type_value = "DOCUMENTO"
+            category_value = "Documento"
+            placeholder_text = "Ver documento adjunto en 'Documento de apoyo'."
+            video_url_value = doc_url
+
+            # 5️⃣ Crear propuestas (una por sede)
+            for venue in venues:
+                new_proposal = Proposal(
+                    user_id=user.id,
+                    title=title_auto,
+                    session_type=session_type_value,
+                    instructional_objective=placeholder_text,
+                    detailed_process=placeholder_text,
+                    learning_outcome=placeholder_text,
+                    category=category_value,
+                    supporting_doc_url=doc_url,
+                    video_url=video_url_value,
+                    venue=venue,
+                    status="Enviada",
+                    received_at=datetime.datetime.now()
+                )
+                db.session.add(new_proposal)
+
+            # 6️⃣ Commit único y seguro
+            db.session.commit()
+            flash(f'¡Propuesta "{title_auto}" enviada a {len(venues)} sede(s) con éxito!', "success")
+            return redirect(url_for("proposals_list"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash("No se pudo enviar la propuesta. Intente nuevamente.", "error")
+            print("❌ Error al guardar propuesta:", e)
+            return redirect(url_for("submit_proposal"))
+#---------------------------------------------NUEVO BLOQUE-------------------------------------------------#
+
+#----------------------------------------ELIMINADO---------------------------------------------------------#
+        # Título automático basado en el nombre del archivo
+        #base_name = os.path.splitext((proposal_file.filename))[0]
+        #title_auto = base_name.replace("_", " ").strip() or "Propuesta en documento"
+
+        # Placeholders para cumplir con tu BD vieja (campos NOT NULL)
+        #session_type_value = "DOCUMENTO"
+        #category_value = "Documento"
+        #placeholder_text = "Ver documento adjunto en 'Documento de apoyo'."
+        # video_url era NOT NULL en tu esquema anterior -> guardamos doc_path como placeholder seguro.
+        #video_url_value = doc_url
+
+        #for venue in venues:
+            #new_proposal = Proposal(
+               #user_id=user.id,
+#                title=title_auto,
+#               session_type=session_type_value,
+#                instructional_objective=placeholder_text,
+#               detailed_process=placeholder_text,
+#                learning_outcome=placeholder_text,
+#                category=category_value,
+                #supporting_doc_url=doc_url,
+                #video_url=video_url_value,
+                #venue=venue,
+                #status="Enviada",
+                #received_at=datetime.datetime.now()
+            #)
+#            db.session.add(new_proposal)
+
+#---------------------------------------------------------------------------------------------------------#
+# <--- PROPUESTA --------------------------------- Eliminado --------------------------------------------->
+        #if not validate_file_size(proposal_file, "proposal"):
+            #flash("La propuesta no debe exceder 10 MB.", "error")
+            #return redirect(url_for("submit_proposal"))
+#---------------------------------------------------------------------------------------------------------#        
+#----------------------------------------ELIMINADO---------------------------------------------------------#
+
+        #db.session.commit()
+        #flash(f'¡Propuesta "{title_auto}" enviada a {len(venues)} sede(s) con éxito!', "success")
+        #return redirect(url_for("proposals_list"))
+#----------------------------------------ELIMINADO---------------------------------------------------------#
 
     venue_options = "".join(
         f"""

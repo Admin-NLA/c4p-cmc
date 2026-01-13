@@ -1076,10 +1076,10 @@ def proposals_list():
 
             rows += f"""
             <tr class="border-b hover:bg-gray-50 transition duration-150">
-                <td class="px-6 py-4 font-semibold cmc-text-blue">{title_display}</td>
-                <td class="px-6 py-4">{p.session_type} ({p.category})</td>
-                <td class="px-6 py-4">{p.venue}</td>
-                <td class="px-6 py-4">
+                <td class="px-3 py-4 font-semibold cmc-text-blue">{title_display}</td>
+                <td class="px-3 py-4">{p.session_type} ({p.category})</td>
+                <td class="px-3 py-4">{p.venue}</td>
+                <td class="px-3 py-4">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {color_class}">
                         {p.status}
                     </span>
@@ -1098,13 +1098,13 @@ def proposals_list():
 
     HTML = f"""
     <div class="overflow-x-auto shadow-md rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-[1200px] divide-y divide-gray-200">
             <thead class="bg-[#2F4885] text-white">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Título</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tipo / Categoría</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Sede</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estatus</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Título</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Tipo / Categoría</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Sede</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Estatus</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -1210,12 +1210,12 @@ def admin_proposals():
 
         rows += f"""
         <tr class="border-b hover:bg-gray-50 transition duration-150">
-            <td class="px-6 py-4">{p.id}</td>
-            <td class="px-6 py-4">{candidate_link}<div class="text-xs cmc-gray">{p.user.email if p.user else ''}</div></td>
-            <td class="px-6 py-4">{p.venue}</td>
-            <td class="px-6 py-4">{received}</td>
-            <td class="px-6 py-4">{doc_link}</td>
-            <td class="px-6 py-4">
+            <td class="px-3 py-4">{p.id}</td>
+            <td class="px-3 py-4">{candidate_link}<div class="text-xs cmc-gray">{p.user.email if p.user else ''}</div></td>
+            <td class="px-3 py-4">{p.venue}</td>
+            <td class="px-3 py-4">{received}</td>
+            <td class="px-3 py-4">{doc_link}</td>
+            <td class="px-3 py-4">
                 <form method="POST" class="flex items-center space-x-2">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="proposal_id" value="{p.id}">
@@ -1227,8 +1227,8 @@ def admin_proposals():
                     </button>
                 </form>
             </td>
-            <td class="px-6 py-4">{p.status}</td>
-            <td class="px-6 py-4">
+            <td class="px-3 py-4">{p.status}</td>
+            <td class="px-3 py-4">
                 <form method="POST"
                     action="{url_for('delete_proposal', proposal_id=p.id)}"
                     onsubmit="return confirm('¿Eliminar esta propuesta? Esta acción no se puede deshacer.')">
@@ -1253,17 +1253,17 @@ def admin_proposals():
     </div>
 
     <div class="overflow-x-auto shadow-md rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-[1200px] divide-y divide-gray-200">
             <thead class="bg-[#2F4885] text-white">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Candidato</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Sede</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Fecha recepción</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Archivo</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Cambiar estatus</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estatus actual</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Candidato</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Sede</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Fecha recepción</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Archivo</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Cambiar estatus</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Estatus actual</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -1387,9 +1387,9 @@ def admin_passwords():
     for u in users:
         rows += f"""
         <tr class="border-b hover:bg-gray-50 transition duration-150">
-            <td class="px-6 py-4">{u.full_name}</td>
-            <td class="px-6 py-4">{u.email}</td>
-            <td class="px-6 py-4 font-mono">{u.unique_password}</td>
+            <td class="px-3 py-4">{u.full_name}</td>
+            <td class="px-3 py-4">{u.email}</td>
+            <td class="px-3 py-4 font-mono">{u.unique_password}</td>
         </tr>
         """
 
@@ -1412,12 +1412,12 @@ def admin_passwords():
     </form>
 
     <div class="overflow-x-auto shadow-md rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-[1200px] divide-y divide-gray-200">
             <thead class="bg-[#2F4885] text-white">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Correo</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contraseña</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Correo</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Contraseña</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">

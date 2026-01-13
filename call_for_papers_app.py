@@ -879,7 +879,8 @@ def submit_proposal():
             db.session.commit()
             flash(f'¡Propuesta "{title_auto}" enviada a {len(venues)} sede(s) con éxito!', "success")
             return redirect(url_for("proposals_list"))
-
+        
+        # ⛔ NO debe ejecutarse ningún código después de este bloque para POST
         except Exception as e:
             db.session.rollback()
             flash("No se pudo enviar la propuesta. Intente nuevamente.", "error")

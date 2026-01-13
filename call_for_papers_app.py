@@ -917,6 +917,7 @@ def submit_proposal():
         </div>
 
         <form method="POST" class="space-y-6" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label class="block text-sm font-medium cmc-text-blue">Archivo de Propuesta (obligatorio) *</label>
                 <input type="file" name="proposal_file" accept=".pdf,.doc,.docx" required
@@ -932,7 +933,6 @@ def submit_proposal():
             </div>
 
             <button type="submit"
-                {{ form.hidden_tag() }}
                 class="bg-[#2F4885] text-white py-4 px-8 rounded-lg font-bold text-lg hover:opacity-90 transition shadow-lg mt-8 w-full">
                 Enviar Propuesta
             </button>

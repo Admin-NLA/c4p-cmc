@@ -1416,7 +1416,7 @@ def admin_passwords():
     </form>
 
     <div class="overflow-x-auto shadow-md rounded-lg">
-        <table class="min-w-[1200px] divide-y divide-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-[#2F4885] text-white">
                 <tr>
                     <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>

@@ -1136,6 +1136,7 @@ def proposals_list():
 # =========================
 
 @app.route("/admin/proposals", methods=["GET", "POST"])
+@csrf.exempt
 def admin_proposals():
     user = get_current_user()
     csrf_token = generate_csrf()

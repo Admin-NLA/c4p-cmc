@@ -1419,9 +1419,9 @@ def admin_passwords():
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-[#2F4885] text-white">
                 <tr>
-                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
-                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Correo</th>
-                    <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Contraseña</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Correo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contraseña</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">

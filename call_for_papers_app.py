@@ -1239,7 +1239,6 @@ def admin_proposals():
                     onsubmit="return confirm('¿Eliminar esta propuesta? Esta acción no se puede deshacer.')">
 
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
                     <button type="submit"
                             class="bg-red-600 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-700 transition">
                         Eliminar
@@ -1437,6 +1436,7 @@ def admin_passwords():
 # ADMIN - ELIMINAR PROPUESTAS
 # =========================
 @app.route("/admin/proposals/<int:proposal_id>/delete", methods=["POST"])
+@csrf.exempt
 def delete_proposal(proposal_id):
     user = get_current_user()
     if not user:

@@ -945,7 +945,7 @@ def submit_proposal():
                 #supporting_doc_url=doc_url,
                 #video_url=video_url_value,
                 #venue=venue,
-                #status="Enviada",
+                #status="En revisión",
                 #received_at=datetime.datetime.now()
             #)
 #            db.session.add(new_proposal)
@@ -959,7 +959,7 @@ def submit_proposal():
 #----------------------------------------ELIMINADO---------------------------------------------------------#
 
         #db.session.commit()
-        #flash(f'¡Propuesta "{title_auto}" enviada a {len(venues)} sede(s) con éxito!', "success")
+        #flash(f'¡Propuesta "{title_auto}" en revisión para la(s) {len(venues)} sede(s) con éxito!', "success")
         #return redirect(url_for("proposals_list"))
 #----------------------------------------ELIMINADO---------------------------------------------------------#
 

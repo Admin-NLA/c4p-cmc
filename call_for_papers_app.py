@@ -46,6 +46,21 @@ DB_DIR = os.path.join(basedir, "data")
 os.makedirs(DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(DB_DIR, "c4p_cmc.db")
 
+# ✅ Connection pooling & auto-reconnection for Postgres
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,  # Verifica conexiones antes de usarlas
+    "pool_recycle": 300,    # Recicla conexiones después de 5 minutos
+    "pool_size": 10,        # Número de conexiones a mantener
+    "max_overflow": 20,     # Conexiones adicionales cuando el pool está lleno
+    "connect_args": {
+        "connect_timeout": 10,
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5,
+    }
+}
+
 import os
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
@@ -243,13 +258,36 @@ def generate_random_password(length=10):
     return "".join(secrets.choice(characters) for _ in range(length))
 
 def get_current_user():
-    try:
-        db.session.rollback()  # ← LIMPIA SESIÓN SI VIENE SUCIA
-    except Exception:
-        pass
-
-    user_id = session.get("user_id")
-    return db.session.get(User, user_id) if user_id else None
+    """✅ Fixed: Added retry logic for database connection issues"""
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            db.session.rollback()  # Clean session if dirty
+            user_id = session.get("user_id")
+            if not user_id:
+                return None
+            
+            # Use get() instead of query to avoid potential stale connections
+            user = db.session.get(User, user_id)
+            return user
+            
+        except Exception as e:
+            retry_count += 1
+            print(f"⚠️ Database error in get_current_user (attempt {retry_count}/{max_retries}): {e}")
+            
+            try:
+                db.session.rollback()
+                db.session.close()
+            except Exception:
+                pass
+            
+            if retry_count >= max_retries:
+                print("❌ Max retries reached in get_current_user")
+                return None
+    
+    return None
 
 def is_valid_public_url(url: str) -> bool:
     """Se mantiene por compatibilidad, aunque ya no se usa."""
@@ -567,20 +605,48 @@ def register():
 @csrf.exempt
 @limiter.limit("5 per minute")
 def login():
+    """✅ Fixed: Added retry logic and better error handling"""
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "").strip()
 
-    user = User.query.filter_by(email=email).first()
-    if user and check_password_hash(user.password_hash, password):
-        session["user_id"] = user.id
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            # Clean session before query
+            db.session.rollback()
+            
+            user = User.query.filter_by(email=email).first()
+            
+            if user and check_password_hash(user.password_hash, password):
+                session["user_id"] = user.id
 
-        if is_admin_user(user):
-            flash("Bienvenido administrador.", "success")
-            return redirect(url_for("admin_proposals"))
+                if is_admin_user(user):
+                    flash("Bienvenido administrador.", "success")
+                    return redirect(url_for("admin_proposals"))
 
-        flash("Inicio de sesión exitoso.", "success")
-        return redirect(url_for("profile"))
-
+                flash("Inicio de sesión exitoso.", "success")
+                return redirect(url_for("profile"))
+            
+            # Invalid credentials (don't retry)
+            flash("Credenciales inválidas.", "error")
+            return redirect(url_for("index"))
+            
+        except Exception as e:
+            retry_count += 1
+            print(f"⚠️ Login error (attempt {retry_count}/{max_retries}): {e}")
+            
+            try:
+                db.session.rollback()
+                db.session.close()
+            except Exception:
+                pass
+            
+            if retry_count >= max_retries:
+                flash("Error de conexión. Por favor, intenta nuevamente en unos segundos.", "error")
+                return redirect(url_for("index"))
+    
     flash("Credenciales inválidas.", "error")
     return redirect(url_for("index"))
 
@@ -1507,3 +1573,13 @@ with app.app_context():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
+@app.route("/health")
+def health_check():
+    """Health check endpoint para monitoring"""
+    try:
+        # Test database connection
+        db.session.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}, 200
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}, 500    

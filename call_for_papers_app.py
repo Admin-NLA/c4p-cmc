@@ -227,7 +227,7 @@ class Proposal(db.Model):
     video_url = db.Column(db.String(255), nullable=False)   # tu BD vieja lo exige (placeholder)
 
     venue = db.Column(db.String(50), nullable=False)
-    status = db.Column(db.String(50), default="Enviada")
+    status = db.Column(db.String(50), default="En revisión")
 
     # Fecha de recepción (se crea via migración ligera si no existe en SQLite)
     received_at = db.Column(db.DateTime, default=datetime.datetime.utcnow())
@@ -903,14 +903,14 @@ def submit_proposal():
                     supporting_doc_url=doc_url,
                     video_url=video_url_value,
                     venue=venue,
-                    status="Enviada",
+                    status="En revisión",
                     received_at=datetime.datetime.utcnow()
                 )
                 db.session.add(new_proposal)
 
             # 6️⃣ Commit único y seguro
             db.session.commit()
-            flash(f'¡Propuesta "{title_auto}" enviada a {len(venues)} sede(s) con éxito!', "success")
+            flash(f'¡Propuesta "{title_auto}" en revisión para la(s) {len(venues)} sede(s) con éxito!', "success")
             return redirect(url_for("proposals_list"))
         
         # ⛔ NO debe ejecutarse ningún código después de este bloque para POST
@@ -983,42 +983,42 @@ def submit_proposal():
     <div class="space-y-6">
 
         <div class="bg-gray-50 p-5 rounded-lg border border-dashed cmc-border">
-            <h3 class="text-xl font-semibold cmc-text-blue mb-3">Instrucciones para el envío de propuesta</h3>
-
+        <h3 class="text-xl font-semibold cmc-text-blue mb-3">Instrucciones para el envío de propuesta</h3>
+ 
             <p class="text-sm cmc-gray mb-4">
-                En este espacio deberás cargar la propuesta de tu sesión para el Congreso de Mantenimiento y Confiabilidad (CMC).
+            En este espacio deberás cargar la propuesta de tu sesión para el Congreso de Mantenimiento y Confiabilidad (CMC).
             </p>
-
+ 
             <p class="text-sm cmc-gray mb-2">
-                Para apoyarte en este proceso, ponemos a tu disposición un asistente automatizado diseñado para ayudarte a:
+            Para apoyarte en este proceso, ponemos a tu disposición un asistente de alineación del CMC, diseñado para ayudarte a:
             </p>
-
+ 
             <ul class="list-disc list-inside text-sm cmc-gray space-y-1 ml-2 mb-3">
-                <li>Crear tu propuesta desde cero, alineada al marco teórico de evaluación del Comité Técnico del CMC, o</li>
-                <li>Evaluar y optimizar una propuesta que ya tengas desarrollada.</li>
+            <li>Crear tu propuesta desde cero, apegada a los lineamientos del Comité Técnico del CMC</li>
+            <li>Evaluar y optimizar una propuesta que ya tengas desarrollada.</li>
             </ul>
-
+ 
             <p class="text-sm cmc-gray mb-4">
-                <span class="font-semibold">👉</span> {assist_link_html}
+            <span class="font-semibold">👉</span> {assist_link_html}
             </p>
-
+ 
             <p class="text-sm cmc-gray mb-2">Al finalizar la interacción con el asistente:</p>
             <ul class="list-disc list-inside text-sm cmc-gray space-y-1 ml-2 mb-4">
-                <li>Recibirás un porcentaje estimado de probabilidad de aceptación, calculado con base en el marco teórico de evaluación del CMC.</li>
-                <li>Podrás descargar tu propuesta en formato PDF, ya optimizada.</li>
+            <li>Recibirás un porcentaje de cumplimiento respecto a los criterios del Comité Técnico del CMC</li>
+            <li>Podrás descargar tu propuesta en formato PDF, ya optimizada.</li>
             </ul>
-
+ 
             <p class="text-sm cmc-gray mb-2">Una vez que cuentes con tu archivo final:</p>
             <ol class="list-decimal list-inside text-sm cmc-gray space-y-1 ml-2 mb-4">
-                <li>Cárgalo en este espacio dentro de la plataforma.</li>
-                <li>Selecciona si deseas enviar tu propuesta a una, dos o las tres sedes del CMC correspondientes al año en curso.</li>
-                <li>Envía tu postulación para su revisión por el Comité Técnico.</li>
+            <li>Cárgalo en este espacio dentro de la plataforma.</li>
+            <li>Selecciona si deseas enviar tu propuesta a una, dos o las tres sedes del CMC correspondientes al año en curso.</li>
+            <li>Envía tu postulación para su revisión por el Comité Técnico.</li>
             </ol>
-
+ 
             <p class="text-sm cmc-gray">
-                El uso del asistente es opcional, pero altamente recomendado para incrementar la alineación y claridad de tu propuesta.
+                Para que el Comité Técnico del CMC pueda evaluar tu propuesta, es necesario que ésta se genere a partir del formato resultante del 
+                asistente de alineación del CMC. Este proceso permite asegurar claridad, alineación y comparabilidad entre las propuestas recibidas.
             </p>
-        </div>
 
         <form method="POST" class="space-y-6" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -1063,10 +1063,10 @@ def proposals_list():
     proposals = user.proposals.order_by(Proposal.id.desc()).all()
 
     STATUS_COLORS = {
-        "Enviada": "bg-blue-100 text-blue-800",
         "En revisión": "bg-yellow-100 text-yellow-800",
         "Aceptada": "bg-green-100 text-green-800",
         "Rechazada": "bg-red-100 text-red-800",
+        "En reserva": "bg-purple-100 text-purple-800",
     }
 
     rows = ""
@@ -1121,12 +1121,12 @@ def proposals_list():
 
     <div class="mt-6">
         <h3 class="text-lg font-semibold cmc-text-blue mb-2">Posibles Estatus:</h3>
-        <ul class="list-disc list-inside cmc-gray space-y-1 ml-4 text-sm">
-            <li><span class="font-semibold">Enviada:</span> Propuesta recibida correctamente.</li>
+            <ul class="list-disc list-inside cmc-gray space-y-1 ml-4 text-sm">
             <li><span class="font-semibold">En revisión:</span> El Comité Técnico está evaluando el contenido.</li>
-            <li><span class="font-semibold">Aceptada:</span> Propuesta seleccionada. Se contactará para continuar.</li>
+            <li><span class="font-semibold">Aceptada:</span> Propuesta seleccionada(Te contactarán por correo electónico para continuar) </li>
             <li><span class="font-semibold">Rechazada:</span> Propuesta no seleccionada en esta ocasión.</li>
-        </ul>
+            <li><span class="font-semibold">En reserva:</span> La propuesta se mantiene como opción en caso de que se libere un espacio o para una próxima edición del CMC.</li>
+            </ul>
     </div>
     """
     return render_internal_page("Mis Propuestas", HTML)
@@ -1179,7 +1179,7 @@ def admin_proposals():
         .all()
     )
 
-    STATUS_OPTIONS = ["Enviada", "En revisión", "Aceptada", "Rechazada"]
+    STATUS_OPTIONS = ["En revisión", "Aceptada", "Rechazada", "En reserva"]
 
     rows = ""
     last_venue = None

@@ -677,9 +677,9 @@ def profile():
     profile_data = user.profile or Profile(user_id=user.id)
 
     COUNTRIES = [
-        "Argentina", "Bolivia", "Chile", "Colombia", "Costa Rica", "Cuba",
-        "Ecuador", "El Salvador", "España", "Guatemala", "Honduras", "México",
-        "Nicaragua", "Panamá", "Paraguay", "Perú", "Puerto Rico",
+        "Argentina", "Brasil", "Bolivia", "Chile", "Colombia", "Costa Rica", "Cuba",
+        "Ecuador", "El Salvador", "España", "Estados Unidos", "Guatemala", "Honduras",
+        "México", "Nicaragua", "Panamá", "Paraguay", "Perú", "Puerto Rico",
         "República Dominicana", "Uruguay", "Venezuela"
     ]
 

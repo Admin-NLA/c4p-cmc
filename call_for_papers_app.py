@@ -1481,6 +1481,20 @@ def admin_passwords():
             </td>
             <td class="px-3 py-4">{u.email}</td>
             <td class="px-3 py-4 font-mono">{u.unique_password}</td>
+            <td class="px-3 py-4 flex gap-2">
+                <a href="{url_for('admin_user_edit', user_id=u.id)}"
+                class="text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:opacity-90">
+                Editar
+                </a>
+
+                <form method="POST" action="{url_for('admin_user_delete', user_id=u.id)}"
+                    onsubmit="return confirm('¿Eliminar este usuario?');">
+                    <button type="submit"
+                            class="text-sm bg-red-600 text-white px-3 py-1 rounded hover:opacity-90">
+                        Eliminar
+                    </button>
+                </form>
+            </td>
         </tr>
         """
 
@@ -1509,6 +1523,7 @@ def admin_passwords():
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Correo</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contraseña</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -1590,6 +1605,32 @@ def admin_user_view(user_id):
     """
 
     return render_internal_page("Admin | Perfil Usuario", HTML)
+
+# NUEVO -------------------------------- eliminar usuarios
+@app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+def admin_user_delete(user_id):
+    user = get_current_user()
+    if not user or not is_admin_user(user):
+        flash("Acceso no autorizado.", "error")
+        return redirect(url_for("index"))
+
+    target = User.query.get_or_404(user_id)
+
+    # Protección básica: no borrar admins
+    if is_admin_user(target):
+        flash("No se puede eliminar un administrador.", "error")
+        return redirect(url_for("admin_passwords"))
+
+    try:
+        db.session.delete(target)
+        db.session.commit()
+        flash("Usuario eliminado correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Error al eliminar el usuario.", "error")
+        print("❌ Error delete user:", e)
+
+    return redirect(url_for("admin_passwords"))
 
 # =========================
 # BOOTSTRAP ADMINS (ADMIN + COMITÉ TÉCNICO)

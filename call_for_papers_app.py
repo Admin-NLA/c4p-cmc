@@ -1487,15 +1487,13 @@ def admin_passwords():
                 Editar
                 </a>
                 <form method="POST"
-                    action="{ url_for('admin_user_delete', user_id=u.id) }"
+                    action="{url_for('admin_user_delete', user_id=u.id)}"
                     onsubmit="return confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')">
-                    
-                    <input type="hidden" name="csrf_token" value="{csrf_token}">
-                    <button type="submit" class="text-red-600 hover:underline"
-                        onclick="return confirm('¿Eliminar este usuario?');">
+                  <input type="hidden" name="csrf_token" value="{csrf_token}">
+                  <button type="submit"
+                          class="bg-red-600 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-700 transition">
                         Eliminar
                     </button>
-
                 </form>
             </td>
         </tr>

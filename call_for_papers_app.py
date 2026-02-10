@@ -1559,6 +1559,46 @@ def delete_proposal(proposal_id):
 
     return redirect(url_for("admin_proposals"))
 
+# NUEVO -------------------------------- ADMINPASSWORD
+@app.route("/admin/users/<int:user_id>")
+def admin_user_view(user_id):
+    user = get_current_user()
+    if not user or not is_admin_user(user):
+        flash("Acceso no autorizado.", "error")
+        return redirect(url_for("index"))
+
+    target = User.query.get_or_404(user_id)
+    profile = target.profile
+
+    HTML = f"""
+    <div class="space-y-4">
+        <h3 class="text-xl font-semibold cmc-text-blue">Perfil del Candidato</h3>
+
+        <div class="bg-white p-4 rounded-lg shadow">
+            <p><b>Nombre:</b> {target.full_name}</p>
+            <p><b>Email:</b> {target.email}</p>
+            <p><b>Rol:</b> {target.role}</p>
+            <p><b>Fecha de alta:</b> {target.created_at}</p>
+            <p><b>Último login:</b> {target.last_login_at or "Nunca"}</p>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold mb-2">Perfil</h4>
+            <p><b>Teléfono:</b> {profile.phone if profile else "-"}</p>
+            <p><b>País:</b> {profile.country if profile else "-"}</p>
+            <p><b>Empresa:</b> {profile.company_name if profile else "-"}</p>
+            <p><b>Puesto:</b> {profile.position if profile else "-"}</p>
+        </div>
+
+        <a href="{url_for('admin_passwords')}"
+           class="inline-block mt-4 bg-[#2F4885] text-white px-4 py-2 rounded-lg">
+           Volver
+        </a>
+    </div>
+    """
+
+    return render_internal_page("Admin | Perfil Usuario", HTML)
+
 # =========================
 # BOOTSTRAP ADMINS (ADMIN + COMITÉ TÉCNICO)
 # =========================
@@ -1606,43 +1646,3 @@ def health_check():
         return {"status": "healthy", "database": "connected"}, 200
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}, 500
-
-# NUEVO -------------------------------- ADMINPASSWORD
-@app.route("/admin/users/<int:user_id>")
-def admin_user_view(user_id):
-    user = get_current_user()
-    if not user or not is_admin_user(user):
-        flash("Acceso no autorizado.", "error")
-        return redirect(url_for("index"))
-
-    target = User.query.get_or_404(user_id)
-    profile = target.profile
-
-    HTML = f"""
-    <div class="space-y-4">
-        <h3 class="text-xl font-semibold cmc-text-blue">Perfil del Candidato</h3>
-
-        <div class="bg-white p-4 rounded-lg shadow">
-            <p><b>Nombre:</b> {target.full_name}</p>
-            <p><b>Email:</b> {target.email}</p>
-            <p><b>Rol:</b> {target.role}</p>
-            <p><b>Fecha de alta:</b> {target.created_at}</p>
-            <p><b>Último login:</b> {target.last_login_at or "Nunca"}</p>
-        </div>
-
-        <div class="bg-gray-50 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Perfil</h4>
-            <p><b>Teléfono:</b> {profile.phone if profile else "-"}</p>
-            <p><b>País:</b> {profile.country if profile else "-"}</p>
-            <p><b>Empresa:</b> {profile.company_name if profile else "-"}</p>
-            <p><b>Puesto:</b> {profile.position if profile else "-"}</p>
-        </div>
-
-        <a href="{url_for('admin_passwords')}"
-           class="inline-block mt-4 bg-[#2F4885] text-white px-4 py-2 rounded-lg">
-           Volver
-        </a>
-    </div>
-    """
-
-    return render_internal_page("Admin | Perfil Usuario", HTML)

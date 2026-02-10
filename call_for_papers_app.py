@@ -1486,12 +1486,12 @@ def admin_passwords():
                 class="text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:opacity-90">
                 Editar
                 </a>
-
-                <form method="POST" action="{{ url_for('admin_user_delete', user_id=u.id) }}"
-                    onsubmit="return confirm('¿Eliminar este usuario?');">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit"
-                            class="text-sm bg-red-600 text-white px-3 py-1 rounded">
+                <form method="POST"
+                    action="{{ url_for('admin_user_delete', user_id=u.id) }}"
+                    onsubmit="return confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')">
+                    <input type="hidden" name="csrf_token" value="{csrf_token}">
+                    <button type="submit" class="btn btn-danger btn-sm"
+                        onclick="return confirm('¿Eliminar este usuario?');">
                         Eliminar
                     </button>
                 </form>
@@ -1611,25 +1611,42 @@ def admin_user_view(user_id):
 @app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
 @csrf.exempt
 def admin_user_delete(user_id):
-    user = get_current_user()
+    admin = get_current_user()
     
-    if not user or not is_admin_user(user):
+    if not admin or not is_admin_user(admin):
         flash("Acceso no autorizado.", "error")
         return redirect(url_for("index"))
 
     if user_id == session.get("user_id"):
         flash("No puedes eliminar tu propio usuario.", "error")
         return redirect(url_for("admin_passwords"))
-    
+
     u = db.session.get(User, user_id)
     if not u:
         flash("Usuario no encontrado.", "error")
         return redirect(url_for("admin_passwords"))
 
     try:
+        # eliminar propuestas del usuario objetivo
+        for p in u.proposals.all():
+            if p.supporting_doc_url:
+                delete_from_cloudinary(p.supporting_doc_url)
+            db.session.delete(p)
+
+        # eliminar perfil
+        if u.profile:
+            if u.profile.cv_url:
+                delete_from_cloudinary(u.profile.cv_url)
+            if u.profile.photo_url:
+                delete_from_cloudinary(u.profile.photo_url)
+            db.session.delete(u.profile)
+
+        # eliminar usuario
         db.session.delete(u)
         db.session.commit()
+
         flash("Usuario eliminado correctamente.", "success")
+
     except Exception as e:
         db.session.rollback()
         flash("Error al eliminar el usuario.", "error")

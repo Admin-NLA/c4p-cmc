@@ -1608,6 +1608,7 @@ def admin_user_view(user_id):
 
 # NUEVO -------------------------------- eliminar usuarios
 @app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+@csrf.exempt
 def admin_user_delete(user_id):
     user = get_current_user()
     if not user or not is_admin_user(user):

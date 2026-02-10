@@ -1623,9 +1623,26 @@ def admin_user_delete(user_id):
         return redirect(url_for("admin_passwords"))
 
     try:
-        db.session.delete(target)
+        # 1️⃣ Eliminar propuestas del usuario
+        proposals = Proposal.query.filter_by(user_id=user.id).all()
+        for p in proposals:
+            delete_from_cloudinary(p.supporting_doc_url)
+            db.session.delete(p)
+
+        # 2️⃣ Eliminar perfil si existe
+        if user.profile:
+            if user.profile.cv_url:
+                delete_from_cloudinary(user.profile.cv_url)
+            if user.profile.photo_url:
+                delete_from_cloudinary(user.profile.photo_url)
+            db.session.delete(user.profile)
+
+        # 3️⃣ Eliminar usuario
+        db.session.delete(user)
         db.session.commit()
+
         flash("Usuario eliminado correctamente.", "success")
+        
     except Exception as e:
         db.session.rollback()
         flash("Error al eliminar el usuario.", "error")
@@ -1635,6 +1652,7 @@ def admin_user_delete(user_id):
 
 # NUEVO -------------------------------- editar usuarios
 @app.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+@csrf.exempt
 def admin_user_edit(user_id):
     user_admin = get_current_user()
     if not user_admin or not is_admin_user(user_admin):

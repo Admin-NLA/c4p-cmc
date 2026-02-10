@@ -1469,16 +1469,22 @@ def admin_passwords():
 
     rows = ""
     for u in users:
+#NUEVO ---------------------
+        created = u.created_at.strftime("%d/%m/%Y %H:%M") if u.created_at else "—"
+        last_login = u.last_login_at.strftime("%d/%m/%Y %H:%M") if u.last_login_at else "Nunca"
+
         rows += f"""
         <tr class="border-b hover:bg-gray-50 transition duration-150">
             <td class="px-3 py-4">
                 <a href="{url_for('admin_user_view', user_id=u.id)}"
-                    class="text-blue-600 font-semibold hover:underline">
-                    {u.full_name}
+                class="cmc-text-blue font-semibold hover:underline">
+                {u.full_name}
                 </a>
             </td>
             <td class="px-3 py-4">{u.email}</td>
             <td class="px-3 py-4 font-mono">{u.unique_password}</td>
+            <td class="px-3 py-4 text-sm">{created}</td>
+            <td class="px-3 py-4 text-sm">{last_login}</td>
         </tr>
         """
 
@@ -1502,11 +1508,13 @@ def admin_passwords():
 
     <div class="overflow-x-auto shadow-md rounded-lg">
         <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-[#2F4885] text-white">
+            <<thead class="bg-[#2F4885] text-white">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Correo</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contraseña</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Alta</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Último login</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">

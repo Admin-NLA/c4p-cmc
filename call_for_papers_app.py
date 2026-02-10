@@ -195,6 +195,12 @@ class User(db.Model):
     profile = db.relationship("Profile", backref="user", uselist=False)
     proposals = db.relationship("Proposal", backref="user", lazy="dynamic")
 
+    #NUEVO -----------------
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login_at = db.Column(db.DateTime)
+
+#Nuevo
+from datetime import datetime
 
 class Profile(db.Model):
     __tablename__ = "profiles"
@@ -600,7 +606,7 @@ def register():
     flash(flash_message, "success")
     return redirect(url_for("profile"))
 
-
+#---------- LOGIN -----------------------------------------------------------------------------------------------------------------
 @app.route("/login", methods=["POST"])
 @csrf.exempt
 @limiter.limit("5 per minute")
@@ -621,6 +627,10 @@ def login():
             
             if user and check_password_hash(user.password_hash, password):
                 session["user_id"] = user.id
+
+                # NUEVO ------------ registrar último login
+                user.last_login_at = datetime.utcnow()
+                db.session.commit()
 
                 if is_admin_user(user):
                     flash("Bienvenido administrador.", "success")
@@ -1461,7 +1471,12 @@ def admin_passwords():
     for u in users:
         rows += f"""
         <tr class="border-b hover:bg-gray-50 transition duration-150">
-            <td class="px-3 py-4">{u.full_name}</td>
+            <td class="px-3 py-4">
+                <a href="{url_for('admin_user_view', user_id=u.id)}"
+                    class="text-blue-600 font-semibold hover:underline">
+                    {u.full_name}
+                </a>
+            </td>
             <td class="px-3 py-4">{u.email}</td>
             <td class="px-3 py-4 font-mono">{u.unique_password}</td>
         </tr>
@@ -1582,4 +1597,44 @@ def health_check():
         db.session.execute(text("SELECT 1"))
         return {"status": "healthy", "database": "connected"}, 200
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}, 500    
+        return {"status": "unhealthy", "error": str(e)}, 500
+
+# NUEVO -------------------------------- ADMINPASSWORD
+@app.route("/admin/users/<int:user_id>")
+def admin_user_view(user_id):
+    user = get_current_user()
+    if not user or not is_admin_user(user):
+        flash("Acceso no autorizado.", "error")
+        return redirect(url_for("index"))
+
+    target = User.query.get_or_404(user_id)
+    profile = target.profile
+
+    HTML = f"""
+    <div class="space-y-4">
+        <h3 class="text-xl font-semibold cmc-text-blue">Perfil del Candidato</h3>
+
+        <div class="bg-white p-4 rounded-lg shadow">
+            <p><b>Nombre:</b> {target.full_name}</p>
+            <p><b>Email:</b> {target.email}</p>
+            <p><b>Rol:</b> {target.role}</p>
+            <p><b>Fecha de alta:</b> {target.created_at}</p>
+            <p><b>Último login:</b> {target.last_login_at or "Nunca"}</p>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold mb-2">Perfil</h4>
+            <p><b>Teléfono:</b> {profile.phone if profile else "-"}</p>
+            <p><b>País:</b> {profile.country if profile else "-"}</p>
+            <p><b>Empresa:</b> {profile.company_name if profile else "-"}</p>
+            <p><b>Puesto:</b> {profile.position if profile else "-"}</p>
+        </div>
+
+        <a href="{url_for('admin_passwords')}"
+           class="inline-block mt-4 bg-[#2F4885] text-white px-4 py-2 rounded-lg">
+           Volver
+        </a>
+    </div>
+    """
+
+    return render_internal_page("Admin | Perfil Usuario", HTML)

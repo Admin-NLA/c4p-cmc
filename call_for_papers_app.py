@@ -1,7 +1,7 @@
 import os
 import secrets
 import string
-import datetime
+from datetime import datetime
 
 from urllib.parse import urlparse  # (se mantiene aunque ya no se use para CV/FOTO/VIDEO en esta versión)
 from flask_wtf import CSRFProtect

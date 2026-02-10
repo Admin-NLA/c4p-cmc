@@ -196,8 +196,8 @@ class User(db.Model):
     proposals = db.relationship("Proposal", backref="user", lazy="dynamic")
 
     #NUEVO -----------------
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_login_at = db.Column(db.DateTime)
+    #created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    #last_login_at = db.Column(db.DateTime)
 
 
 class Profile(db.Model):
@@ -627,8 +627,8 @@ def login():
                 session["user_id"] = user.id
 
                 # NUEVO ------------ registrar último login
-                user.last_login_at = datetime.utcnow()
-                db.session.commit()
+                #user.last_login_at = datetime.utcnow()
+                #db.session.commit()
 
                 if is_admin_user(user):
                     flash("Bienvenido administrador.", "success")
@@ -1468,8 +1468,8 @@ def admin_passwords():
     rows = ""
     for u in users:
 #NUEVO ---------------------
-        created = u.created_at.strftime("%d/%m/%Y %H:%M") if u.created_at else "—"
-        last_login = u.last_login_at.strftime("%d/%m/%Y %H:%M") if u.last_login_at else "Nunca"
+        #created = u.created_at.strftime("%d/%m/%Y %H:%M") if u.created_at else "—"
+        #last_login = u.last_login_at.strftime("%d/%m/%Y %H:%M") if u.last_login_at else "Nunca"
 
         rows += f"""
         <tr class="border-b hover:bg-gray-50 transition duration-150">
@@ -1481,8 +1481,6 @@ def admin_passwords():
             </td>
             <td class="px-3 py-4">{u.email}</td>
             <td class="px-3 py-4 font-mono">{u.unique_password}</td>
-            <td class="px-3 py-4 text-sm">{created}</td>
-            <td class="px-3 py-4 text-sm">{last_login}</td>
         </tr>
         """
 
@@ -1576,8 +1574,6 @@ def admin_user_view(user_id):
             <p><b>Nombre:</b> {target.full_name}</p>
             <p><b>Email:</b> {target.email}</p>
             <p><b>Rol:</b> {target.role}</p>
-            <p><b>Fecha de alta:</b> {target.created_at}</p>
-            <p><b>Último login:</b> {target.last_login_at or "Nunca"}</p>
         </div>
 
         <div class="bg-gray-50 p-4 rounded-lg">

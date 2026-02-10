@@ -1489,11 +1489,14 @@ def admin_passwords():
                 <form method="POST"
                     action="{{ url_for('admin_user_delete', user_id=u.id) }}"
                     onsubmit="return confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')">
-                    <input type="hidden" name="csrf_token" value="{csrf_token}">
+                    
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
                     <button type="submit" class="btn btn-danger btn-sm"
                         onclick="return confirm('¿Eliminar este usuario?');">
                         Eliminar
                     </button>
+
                 </form>
             </td>
         </tr>
@@ -1617,7 +1620,7 @@ def admin_user_delete(user_id):
         flash("Acceso no autorizado.", "error")
         return redirect(url_for("index"))
 
-    if user_id == session.get("user_id"):
+    if user_id == admin.id:
         flash("No puedes eliminar tu propio usuario.", "error")
         return redirect(url_for("admin_passwords"))
 

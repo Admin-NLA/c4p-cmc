@@ -1632,6 +1632,53 @@ def admin_user_delete(user_id):
 
     return redirect(url_for("admin_passwords"))
 
+# NUEVO -------------------------------- editar usuarios
+@app.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+def admin_user_edit(user_id):
+    user_admin = get_current_user()
+    if not user_admin or not is_admin_user(user_admin):
+        flash("Acceso no autorizado.", "error")
+        return redirect(url_for("index"))
+
+    u = User.query.get_or_404(user_id)
+
+    if request.method == "POST":
+        u.full_name = request.form.get("full_name", "").strip()
+        u.email = request.form.get("email", "").strip().lower()
+
+        db.session.commit()
+        flash("Usuario actualizado correctamente.", "success")
+        return redirect(url_for("admin_passwords"))
+
+    HTML = f"""
+    <form method="POST" class="space-y-4 max-w-xl">
+        <div>
+            <label class="block text-sm font-medium">Nombre</label>
+            <input name="full_name" value="{u.full_name or ''}"
+                   class="w-full p-2 border rounded">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium">Correo</label>
+            <input name="email" value="{u.email}"
+                   class="w-full p-2 border rounded">
+        </div>
+
+        <div class="flex gap-3">
+            <button type="submit"
+                class="bg-[#2F4885] text-white px-4 py-2 rounded">
+                Guardar
+            </button>
+            <a href="{url_for('admin_passwords')}"
+               class="px-4 py-2 border rounded">
+               Cancelar
+            </a>
+        </div>
+    </form>
+    """
+
+    return render_internal_page("Editar Usuario", HTML)
+
 # =========================
 # BOOTSTRAP ADMINS (ADMIN + COMITÉ TÉCNICO)
 # =========================

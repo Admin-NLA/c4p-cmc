@@ -1,7 +1,7 @@
 import os
 import secrets
 import string
-import datetime
+from datetime import datetime
 
 from urllib.parse import urlparse  # (se mantiene aunque ya no se use para CV/FOTO/VIDEO en esta versión)
 from flask_wtf import CSRFProtect
@@ -199,8 +199,6 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login_at = db.Column(db.DateTime)
 
-#Nuevo
-from datetime import datetime
 
 class Profile(db.Model):
     __tablename__ = "profiles"

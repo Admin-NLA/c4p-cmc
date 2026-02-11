@@ -1455,6 +1455,9 @@ def admin_passwords():
     if not is_admin_user(user):
         flash("Acceso no autorizado.", "error")
         return redirect(url_for("profile"))
+    
+    # GENERA TOKEN
+    csrf_token = generate_csrf()
 
     q = (request.args.get("q") or "").strip().lower()
 
@@ -1467,10 +1470,6 @@ def admin_passwords():
 
     rows = ""
     for u in users:
-#NUEVO ---------------------
-        #created = u.created_at.strftime("%d/%m/%Y %H:%M") if u.created_at else "—"
-        #last_login = u.last_login_at.strftime("%d/%m/%Y %H:%M") if u.last_login_at else "Nunca"
-
         rows += f"""
         <tr class="border-b hover:bg-gray-50 transition duration-150">
             <td class="px-3 py-4">
@@ -1528,7 +1527,7 @@ def admin_passwords():
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                {rows or '<tr><td colspan="3" class="px-6 py-8 text-center cmc-gray">Sin resultados.</td></tr>'}
+                {rows or '<tr><td colspan="4" class="px-6 py-8 text-center cmc-gray">Sin resultados.</td></tr>'}
             </tbody>
         </table>
     </div>

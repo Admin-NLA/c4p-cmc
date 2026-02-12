@@ -978,7 +978,7 @@ def submit_proposal():
                     video_url=video_url_value,
                     venue=venue,
                     status="En revisión",
-                    received_at=datetime.utcnow
+                    received_at=datetime.utcnow()
                 )
                 db.session.add(new_proposal)
 
